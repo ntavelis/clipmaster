@@ -1,11 +1,12 @@
-# README
+# Clipmaster
 
-## About
+A lightweight desktop clipboard manager built with Wails and Vue 3. It tracks your clipboard history, lets you browse and re-copy past items, and is designed for keyboard-first workflows.
 
-This is the official Wails Vue template.
-
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+- In-memory clipboard history (text only, up to 50 items)
+- Keyboard navigation with shortcuts for quick copying (Ctrl+1..9)
+- Expandable entries for viewing long text
+- Live Omarchy theme support — colors update automatically when you switch themes
+- Multi-machine sync via WebRTC (planned)
 
 ## Live Development
 
