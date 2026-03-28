@@ -18,12 +18,12 @@ onUnmounted(() => {
 
 <template>
   <div class="flex flex-col h-full">
-    <div class="px-4 py-3 border-b border-bright-black">
+    <div class="px-4 py-3 border-b border-color8">
       <h1 class="text-sm font-semibold text-accent tracking-widest uppercase">Clipboard History</h1>
     </div>
 
     <div class="flex-1 overflow-y-auto">
-      <p v-if="clipboard.items.length === 0" class="text-center text-white mt-8 text-sm">
+      <p v-if="clipboard.items.length === 0" class="text-center text-color7 mt-8 text-sm">
         Nothing copied yet.
       </p>
       <ClipboardItem

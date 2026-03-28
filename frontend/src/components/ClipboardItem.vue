@@ -17,12 +17,12 @@ function formatTime(timestamp) {
 
 <template>
   <div
-    class="flex items-start gap-3 px-4 py-3 border-b border-bright-black cursor-pointer hover:bg-bright-black transition-colors"
+    class="flex items-start gap-3 px-4 py-3 border-b border-color8 cursor-pointer hover:bg-color8 transition-colors"
     @click="clipboard.copyItem(entry.id)"
   >
     <div class="flex-1 min-w-0">
       <p class="text-sm text-foreground truncate">{{ entry.content }}</p>
     </div>
-    <span class="shrink-0 text-xs text-white mt-0.5">{{ formatTime(entry.timestamp) }}</span>
+    <span class="shrink-0 text-xs text-color7 mt-0.5">{{ formatTime(entry.timestamp) }}</span>
   </div>
 </template>

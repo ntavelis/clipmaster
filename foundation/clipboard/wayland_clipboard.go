@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
-	"strings"
 )
 
 // WaylandClipboard reads and writes the system clipboard via wl-paste/wl-copy.
@@ -22,8 +21,7 @@ func (w WaylandClipboard) GetText() (string, error) {
 
 // SetText writes text to the clipboard using wl-copy.
 func (w WaylandClipboard) SetText(text string) error {
-	cmd := exec.Command("wl-copy")
-	cmd.Stdin = strings.NewReader(text)
+	cmd := exec.Command("wl-copy", text)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {

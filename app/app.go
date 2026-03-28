@@ -34,13 +34,14 @@ func NewApp() *App {
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 
-	var backend clipboard.Backend
+	generic := clipboard.GenericClipboard{Ctx: ctx}
+	var reader clipboard.Reader
 	if a.useWayland {
-		backend = osclip.WaylandClipboard{}
+		reader = osclip.WaylandClipboard{}
 	} else {
-		backend = clipboard.GenericClipboard{Ctx: ctx}
+		reader = generic
 	}
-	a.monitor = clipboard.NewMonitor(backend, a.cfg.MaxHistory, a.cfg.PollInterval)
+	a.monitor = clipboard.NewMonitor(reader, generic, a.cfg.MaxHistory, a.cfg.PollInterval)
 
 	colors, err := theme.Load(a.cfg.ThemeColorPath)
 	if err != nil {

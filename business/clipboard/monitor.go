@@ -7,9 +7,13 @@ import (
 	"time"
 )
 
-// Backend abstracts clipboard read/write so different implementations can be swapped in.
-type Backend interface {
+// Reader abstracts clipboard reading so different implementations can be swapped in.
+type Reader interface {
 	GetText() (string, error)
+}
+
+// Writer abstracts clipboard writing so different implementations can be swapped in.
+type Writer interface {
 	SetText(text string) error
 }
 
@@ -21,14 +25,16 @@ type Monitor struct {
 	pollInterval time.Duration
 	lastSeen     string
 	cancel       context.CancelFunc
-	backend      Backend
+	reader       Reader
+	writer       Writer
 	OnNewEntry   func(ClipboardEntry)
 }
 
-// NewMonitor creates a Monitor with the given backend, capacity, and poll interval.
-func NewMonitor(backend Backend, maxHistory int, pollInterval time.Duration) *Monitor {
+// NewMonitor creates a Monitor with the given reader, writer, capacity, and poll interval.
+func NewMonitor(reader Reader, writer Writer, maxHistory int, pollInterval time.Duration) *Monitor {
 	return &Monitor{
-		backend:      backend,
+		reader:       reader,
+		writer:       writer,
 		maxHistory:   maxHistory,
 		pollInterval: pollInterval,
 	}
@@ -61,12 +67,16 @@ func (m *Monitor) GetHistory() []ClipboardEntry {
 
 // CopyItem writes the entry with the given ID back to the system clipboard.
 func (m *Monitor) CopyItem(id string) error {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	for _, entry := range m.history {
 		if entry.ID == id {
-			return m.backend.SetText(entry.Content)
+			if err := m.writer.SetText(entry.Content); err != nil {
+				return err
+			}
+			m.lastSeen = entry.Content
+			return nil
 		}
 	}
 	return fmt.Errorf("entry %s not found", id)
@@ -82,7 +92,7 @@ func (m *Monitor) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			text, err := m.backend.GetText()
+			text, err := m.reader.GetText()
 			if err != nil || text == "" || text == m.lastSeen {
 				continue
 			}
