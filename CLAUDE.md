@@ -27,8 +27,7 @@ A Wails desktop clipboard manager that tracks clipboard history and syncs across
 - Sync is **bidirectional** — all connected peers share clipboard entries with everyone
 
 ## Omarchy Theming
-- Active theme name is stored in `~/.config/omarchy/current/theme.name`
-- Watch that file for changes and update the UI dynamically via Wails events
+- Watch the theme color file for changes and update the UI dynamically via Wails events
 - All colors in the UI must come from Omarchy theme tokens; no hardcoded colors
 
 ## App Behavior

@@ -10,7 +10,6 @@ import (
 type AppConfig struct {
 	MaxHistory     int
 	ThemeColorPath string
-	ThemeNamePath  string
 	PollInterval   time.Duration
 }
 
@@ -20,7 +19,6 @@ func Default() AppConfig {
 	return AppConfig{
 		MaxHistory:     50,
 		ThemeColorPath: filepath.Join(home, ".config/omarchy/current/theme/colors.toml"),
-		ThemeNamePath:  filepath.Join(home, ".config/omarchy/current/theme.name"),
 		PollInterval:   500 * time.Millisecond,
 	}
 }

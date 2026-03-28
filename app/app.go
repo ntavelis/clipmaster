@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"os"
 	"os/exec"
 
 	"clipmaster/business/clipboard"
@@ -43,20 +44,22 @@ func (a *App) Startup(ctx context.Context) {
 	}
 	a.monitor = clipboard.NewMonitor(reader, generic, a.cfg.MaxHistory, a.cfg.PollInterval)
 
-	colors, err := theme.Load(a.cfg.ThemeColorPath)
-	if err != nil {
-		runtime.LogWarningf(ctx, "could not load theme: %v", err)
-	} else {
-		a.colors = colors
-		runtime.EventsEmit(ctx, "theme:loaded", colors)
-	}
+	if areWeRunningInOmarchy(a.cfg.ThemeColorPath) {
+		colors, err := theme.Load(a.cfg.ThemeColorPath)
+		if err != nil {
+			runtime.LogWarningf(ctx, "could not load theme: %v", err)
+		} else {
+			a.colors = colors
+			runtime.EventsEmit(ctx, "theme:loaded", colors)
+		}
 
-	w := theme.NewWatcher(a.cfg.ThemeColorPath, func(c theme.ThemeColors) {
-		a.colors = c
-		runtime.EventsEmit(ctx, "theme:loaded", c)
-	})
-	if err := w.Start(ctx); err != nil {
-		runtime.LogWarningf(ctx, "could not watch theme file: %v", err)
+		w := theme.NewWatcher(a.cfg.ThemeColorPath, func(c theme.ThemeColors) {
+			a.colors = c
+			runtime.EventsEmit(ctx, "theme:loaded", c)
+		})
+		if err := w.Start(ctx); err != nil {
+			runtime.LogWarningf(ctx, "could not watch theme file: %v", err)
+		}
 	}
 
 	a.monitor.OnNewEntry = func(entry clipboard.ClipboardEntry) {
@@ -83,6 +86,11 @@ func (a *App) CopyItem(id string) error {
 // GetTheme returns the currently loaded theme colors.
 func (a *App) GetTheme() theme.ThemeColors {
 	return a.colors
+}
+
+func areWeRunningInOmarchy(themeColorPath string) bool {
+	_, err := os.Stat(themeColorPath)
+	return err == nil
 }
 
 func isWaylandAvailable() bool {

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+/* Default colors of tokyo night theme,
+* in case we are not in omarchy */
 @theme {
   --color-*: initial;
 
