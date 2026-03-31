@@ -2,31 +2,40 @@ package app
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"os/exec"
+	"time"
 
 	"clipmaster/business/clipboard"
 	"clipmaster/business/theme"
 	osclip "clipmaster/foundation/clipboard"
-	"clipmaster/foundation/config"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+// Config holds all configurable values for the application.
+type Config struct {
+	MaxHistory     int
+	ThemeColorPath string
+	PollInterval   time.Duration
+}
+
 // App is the Wails bind target. It owns startup/shutdown and delegates to business packages.
 type App struct {
 	ctx        context.Context
-	cfg        config.AppConfig
+	log        *slog.Logger
+	cfg        Config
 	monitor    *clipboard.Monitor
 	colors     theme.ThemeColors
 	useWayland bool
 }
 
-// NewApp creates an App with default configuration.
-func NewApp() *App {
-	cfg := config.Default()
+// NewApp creates an App with the provided configuration.
+func NewApp(log *slog.Logger, cfg Config) *App {
 	return &App{
 		cfg:        cfg,
+		log:        log,
 		useWayland: isWaylandAvailable(),
 	}
 }
@@ -34,6 +43,7 @@ func NewApp() *App {
 // Startup is called by Wails when the application starts.
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+	a.log.Info("starting application")
 
 	generic := clipboard.GenericClipboard{Ctx: ctx}
 	var reader clipboard.Reader
@@ -70,6 +80,7 @@ func (a *App) Startup(ctx context.Context) {
 
 // Shutdown is called by Wails when the application is closing.
 func (a *App) Shutdown(ctx context.Context) {
+	a.log.Info("shutting down application")
 	a.monitor.Stop()
 }
 

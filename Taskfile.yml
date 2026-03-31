@@ -1,0 +1,21 @@
+version: "3"
+
+tasks:
+  frontend:build:
+    dir: frontend
+    cmds:
+      - npm run build
+
+  app:build:
+    vars:
+      REVISION:
+        sh: git rev-parse HEAD
+      MODIFIED:
+        sh: git diff --quiet && echo false || echo true
+    cmds:
+      - go mod tidy
+      - wails build -ldflags "-X clipmaster/foundation/vcs.Revision={{.REVISION}} -X clipmaster/foundation/vcs.Modified={{.MODIFIED}}"
+
+  app:dev:
+    cmds:
+      - wails dev
