@@ -40,6 +40,7 @@ type App struct {
 	syncServer  *bsync.Server
 	discoverer  *fmdns.Discoverer
 	peerFetcher *peersclipsync.Fetcher
+	passphrase  string
 }
 
 // NewApp creates an App with the provided configuration.
@@ -148,6 +149,17 @@ func (a *App) CopyRemoteItem(content string) error {
 // GetTheme returns the currently loaded theme colors.
 func (a *App) GetTheme() theme.ThemeColors {
 	return a.colors
+}
+
+// NeedsPassphrase reports whether the user still needs to provide a passphrase.
+func (a *App) NeedsPassphrase() bool {
+	return a.passphrase == ""
+}
+
+// SubmitPassphrase stores the passphrase provided by the user.
+func (a *App) SubmitPassphrase(p string) {
+	a.log.Info("passphrase received (prototype, not persisted)")
+	a.passphrase = p
 }
 
 func areWeRunningInOmarchy(themeColorPath string) bool {

@@ -21,3 +21,11 @@ export function GetRemoteClipboards() {
 export function GetTheme() {
   return window['go']['app']['App']['GetTheme']();
 }
+
+export function NeedsPassphrase() {
+  return window['go']['app']['App']['NeedsPassphrase']();
+}
+
+export function SubmitPassphrase(arg1) {
+  return window['go']['app']['App']['SubmitPassphrase'](arg1);
+}

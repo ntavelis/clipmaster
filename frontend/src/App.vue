@@ -1,16 +1,18 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { EventsOn } from '../wailsjs/runtime/runtime'
-import { GetTheme } from '../wailsjs/go/app/App'
+import { GetTheme, NeedsPassphrase } from '../wailsjs/go/app/App'
 import { useThemeStore } from './stores/theme'
 import { useClipboardStore } from './stores/clipboard'
 import { useRemoteStore } from './stores/remote'
 import ClipboardHistory from './components/ClipboardHistory.vue'
 import RemoteClipboard from './components/RemoteClipboard.vue'
+import PassphraseSetup from './components/PassphraseSetup.vue'
 
 const themeStore = useThemeStore()
 const clipboard = useClipboardStore()
 const remote = useRemoteStore()
+const needsSetup = ref(true)
 
 const showToast = computed(() => clipboard.lastCopiedId !== null || remote.lastCopiedId !== null)
 
@@ -93,6 +95,8 @@ onMounted(async () => {
     themeStore.applyColors(colors)
   }
 
+  needsSetup.value = await NeedsPassphrase()
+
   window.addEventListener('keydown', handleKeydown)
   window.addEventListener('mousemove', handleMouseMove)
 })
@@ -104,7 +108,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-foreground font-mono flex flex-col">
+  <PassphraseSetup v-if="needsSetup" @done="needsSetup = false" />
+  <div v-else class="min-h-screen bg-background text-foreground font-mono flex flex-col">
     <div class="flex border-b border-color8">
       <button
         class="px-4 py-2.5 text-xs font-semibold tracking-widest uppercase transition-colors border-b-2"
