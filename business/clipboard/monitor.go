@@ -83,6 +83,17 @@ func (m *Monitor) CopyItem(id string) error {
 	return fmt.Errorf("entry %s not found", id)
 }
 
+// CopyText writes arbitrary text to the system clipboard without adding it to history.
+func (m *Monitor) CopyText(text string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.writer.SetText(text); err != nil {
+		return err
+	}
+	m.lastSeen = text
+	return nil
+}
+
 // poll runs the clipboard polling loop until ctx is cancelled.
 func (m *Monitor) poll(ctx context.Context) {
 	ticker := time.NewTicker(m.pollInterval)

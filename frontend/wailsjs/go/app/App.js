@@ -6,8 +6,16 @@ export function CopyItem(arg1) {
   return window['go']['app']['App']['CopyItem'](arg1);
 }
 
+export function CopyRemoteItem(arg1) {
+  return window['go']['app']['App']['CopyRemoteItem'](arg1);
+}
+
 export function GetHistory() {
   return window['go']['app']['App']['GetHistory']();
+}
+
+export function GetRemoteClipboards() {
+  return window['go']['app']['App']['GetRemoteClipboards']();
 }
 
 export function GetTheme() {

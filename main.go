@@ -29,6 +29,13 @@ type appConfig struct {
 		MaxHistory   int           `conf:"default:50"`
 		PollInterval time.Duration `conf:"default:500ms"`
 	}
+	RemoteClipboards struct {
+		MaxHistory   int           `conf:"default:3"`
+		PollInterval time.Duration `conf:"default:1s"`
+	}
+	Peers struct {
+		PollInterval time.Duration `conf:"default:5s"`
+	}
 	conf.Version
 }
 
@@ -63,9 +70,12 @@ func run(log *slog.Logger) error {
 	log.Info("application configuration", "config", cfgStr)
 
 	application := app.NewApp(log, app.Config{
-		MaxHistory:     cfg.Clipboard.MaxHistory,
-		ThemeColorPath: cfg.ThemeColorPath,
-		PollInterval:   cfg.Clipboard.PollInterval,
+		MaxHistory:                   cfg.Clipboard.MaxHistory,
+		ThemeColorPath:               cfg.ThemeColorPath,
+		PollInterval:                 cfg.Clipboard.PollInterval,
+		RemoteClipboardsPollInterval: cfg.RemoteClipboards.PollInterval,
+		RemoteClipboardsMaxHistory:   cfg.RemoteClipboards.MaxHistory,
+		PeersPollInterval:            cfg.Peers.PollInterval,
 	})
 
 	if err := wails.Run(&options.App{

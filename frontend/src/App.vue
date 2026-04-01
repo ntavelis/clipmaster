@@ -5,6 +5,7 @@ import { GetTheme } from '../wailsjs/go/app/App'
 import { useThemeStore } from './stores/theme'
 import { useClipboardStore } from './stores/clipboard'
 import ClipboardHistory from './components/ClipboardHistory.vue'
+import RemoteClipboard from './components/RemoteClipboard.vue'
 
 const themeStore = useThemeStore()
 const clipboard = useClipboardStore()
@@ -32,6 +33,7 @@ onMounted(async () => {
 <template>
   <div class="min-h-screen bg-background text-foreground font-mono">
     <ClipboardHistory />
+    <RemoteClipboard />
 
     <Transition
       enter-active-class="transition-opacity duration-200"
