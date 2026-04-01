@@ -132,6 +132,7 @@ func (d *Discoverer) browse() {
 		close(entries)
 	}()
 
+	found := make(map[string]Peer)
 	for entry := range entries {
 		if d.myName != "" && strings.HasPrefix(entry.Name, d.myName) {
 			continue
@@ -144,14 +145,18 @@ func (d *Discoverer) browse() {
 			addr = entry.AddrV6.String()
 		}
 
-		p := Peer{
+		found[entry.Name] = Peer{
 			Name: entry.Name,
 			Addr: addr,
 			Port: entry.Port,
 		}
-		d.mu.Lock()
-		d.peers[entry.Name] = p
-		d.mu.Unlock()
+	}
+
+	d.mu.Lock()
+	d.peers = found
+	d.mu.Unlock()
+
+	for _, p := range found {
 		d.log.Info("mdns peer discovered", "name", p.Name, "addr", p.Addr, "port", p.Port)
 	}
 }

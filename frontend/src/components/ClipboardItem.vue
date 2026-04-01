@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useClipboardStore } from '../stores/clipboard'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 
 const props = defineProps({
   entry: {
@@ -15,11 +14,22 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  copied: {
+    type: Boolean,
+    default: false,
+  },
+  expanded: {
+    type: Boolean,
+    default: false,
+  },
+  keyboardActive: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const clipboard = useClipboardStore()
-const copied = computed(() => clipboard.lastCopiedId === props.entry.id)
-const expanded = computed(() => clipboard.expandedIds.has(props.entry.id))
+const emit = defineEmits(['copy', 'toggle-expand'])
+
 const isOverflowing = ref(false)
 const hovered = ref(false)
 const tooltipStyle = ref({})
@@ -33,7 +43,7 @@ watch(() => props.selected, (val) => {
   }
 })
 
-watch(() => clipboard.keyboardActive, (val) => {
+watch(() => props.keyboardActive, (val) => {
   if (val) hovered.value = false
 })
 
@@ -50,10 +60,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', checkOverflow)
 })
-
-function toggleExpand() {
-  clipboard.toggleExpanded(props.entry.id)
-}
 
 function updateTooltipPosition() {
   if (!iconRef.value) return
@@ -74,9 +80,9 @@ function onMouseLeave() {
   hovered.value = false
 }
 
-async function handleCopy() {
-  await clipboard.copyItem(props.entry.id)
-  if (expanded.value) clipboard.toggleExpanded(props.entry.id)
+function handleCopy() {
+  emit('copy')
+  if (props.expanded) emit('toggle-expand')
 }
 
 function formatTime(timestamp) {
@@ -87,7 +93,7 @@ function formatTime(timestamp) {
 <template>
   <div ref="rowRef"
     class="group relative flex items-start gap-3 px-4 py-3 border-b border-color8 cursor-pointer transition-colors"
-    :class="[selected ? 'bg-color8/50' : '', clipboard.keyboardActive ? '' : 'hover:bg-color8/50']" @click="handleCopy"
+    :class="[selected ? 'bg-color8/50' : '', keyboardActive ? '' : 'hover:bg-color8/50']" @click="handleCopy"
     @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
     <span class="shrink-0 w-3 text-[10px] leading-4 text-color2 text-center">{{ index < 9 ? index + 1 : '·' }}</span>
 
@@ -98,7 +104,7 @@ function formatTime(timestamp) {
 
         <button v-if="isOverflowing || expanded"
           class="shrink-0 mt-0.5 text-color6 hover:text-accent cursor-pointer transition-transform"
-          :class="expanded ? 'rotate-180' : ''" @click.stop="toggleExpand">
+          :class="expanded ? 'rotate-180' : ''" @click.stop="emit('toggle-expand')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
             <polyline points="6 9 12 15 18 9" />

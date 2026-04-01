@@ -1,15 +1,18 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { EventsOn } from '../wailsjs/runtime/runtime'
 import { GetTheme } from '../wailsjs/go/app/App'
 import { useThemeStore } from './stores/theme'
 import { useClipboardStore } from './stores/clipboard'
+import { useRemoteStore } from './stores/remote'
 import ClipboardHistory from './components/ClipboardHistory.vue'
 import RemoteClipboard from './components/RemoteClipboard.vue'
 
 const themeStore = useThemeStore()
 const clipboard = useClipboardStore()
-const showToast = computed(() => clipboard.lastCopiedId !== null)
+const remote = useRemoteStore()
+
+const showToast = computed(() => clipboard.lastCopiedId !== null || remote.lastCopiedId !== null)
 
 const shortcuts = [
   { keys: 'Up / Down', action: 'Navigate items' },
@@ -17,8 +20,70 @@ const shortcuts = [
   { keys: 'Space', action: 'Expand / collapse selected' },
   { keys: 'Escape', action: 'Collapse all / clear selection' },
   { keys: 'Ctrl+1..9', action: 'Quick copy Nth item' },
+  { keys: '[', action: 'Clipboard tab' },
+  { keys: ']', action: 'Remote tab' },
   { keys: 'Ctrl+K', action: 'Toggle this panel' },
 ]
+
+let lastMouseX = 0
+let lastMouseY = 0
+
+function handleMouseMove(e) {
+  const dx = Math.abs(e.clientX - lastMouseX)
+  const dy = Math.abs(e.clientY - lastMouseY)
+  if (dx > 3 || dy > 3) {
+    const store = clipboard.activeTab === 'local' ? clipboard : remote
+    store.clearSelection()
+  }
+  lastMouseX = e.clientX
+  lastMouseY = e.clientY
+}
+
+function handleKeydown(e) {
+  if (e.key === '[') {
+    clipboard.activeTab = 'local'
+    return
+  } else if (e.key === ']') {
+    clipboard.activeTab = 'remote'
+    return
+  }
+
+  const store = clipboard.activeTab === 'local' ? clipboard : remote
+  const items = clipboard.activeTab === 'local' ? clipboard.items : remote.flatEntries
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    store.selectNext()
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    store.selectPrev()
+  } else if (e.key === 'Enter' && store.selectedIndex >= 0) {
+    e.preventDefault()
+    const item = items[store.selectedIndex]
+    if (item) {
+      store.copyItem(item.id)
+      if (store.expandedIds.has(item.id)) store.toggleExpanded(item.id)
+    }
+  } else if (e.key === ' ' && store.selectedIndex >= 0) {
+    e.preventDefault()
+    const item = items[store.selectedIndex]
+    if (item) store.toggleExpanded(item.id)
+  } else if (e.key === 'Escape') {
+    if (store.expandedIds.size > 0) {
+      store.collapseAll()
+    } else {
+      store.clearSelection()
+    }
+  } else if (e.ctrlKey && e.key === 'k') {
+    e.preventDefault()
+    clipboard.showShortcuts = !clipboard.showShortcuts
+  } else if (e.ctrlKey && e.key >= '1' && e.key <= '9') {
+    e.preventDefault()
+    const idx = parseInt(e.key) - 1
+    const item = items[idx]
+    if (item) store.copyItem(item.id)
+  }
+}
 
 onMounted(async () => {
   EventsOn('theme:loaded', themeStore.applyColors)
@@ -27,13 +92,44 @@ onMounted(async () => {
   if (colors && colors.background) {
     themeStore.applyColors(colors)
   }
+
+  window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('mousemove', handleMouseMove)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('mousemove', handleMouseMove)
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-foreground font-mono">
-    <ClipboardHistory />
-    <RemoteClipboard />
+  <div class="min-h-screen bg-background text-foreground font-mono flex flex-col">
+    <div class="flex border-b border-color8">
+      <button
+        class="px-4 py-2.5 text-xs font-semibold tracking-widest uppercase transition-colors border-b-2"
+        :class="clipboard.activeTab === 'local' ? 'text-accent border-accent' : 'text-color7 border-transparent hover:text-foreground'"
+        @click="clipboard.activeTab = 'local'"
+      >
+        Clipboard
+      </button>
+      <button
+        class="px-4 py-2.5 text-xs font-semibold tracking-widest uppercase transition-colors border-b-2"
+        :class="clipboard.activeTab === 'remote' ? 'text-accent border-accent' : 'text-color7 border-transparent hover:text-foreground'"
+        @click="clipboard.activeTab = 'remote'"
+      >
+        Remote Clipboard{{ remote.peers.length > 1 ? 's' : '' }}
+        <span v-if="remote.peers.length > 0" class="ml-1.5 text-[10px] text-color7 normal-case tracking-normal">{{ remote.peers.length }}</span>
+      </button>
+      <div class="ml-auto flex items-center pr-4">
+        <span class="text-[10px] text-color7">Ctrl+K shortcuts</span>
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-hidden">
+      <ClipboardHistory v-show="clipboard.activeTab === 'local'" />
+      <RemoteClipboard v-show="clipboard.activeTab === 'remote'" />
+    </div>
 
     <Transition
       enter-active-class="transition-opacity duration-200"

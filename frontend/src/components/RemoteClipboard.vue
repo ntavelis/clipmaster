@@ -2,9 +2,13 @@
 import { onMounted, onUnmounted } from 'vue'
 import { EventsOn, EventsOff } from '../../wailsjs/runtime/runtime'
 import { useRemoteStore } from '../stores/remote'
-import RemoteClipboardItem from './RemoteClipboardItem.vue'
+import ClipboardItem from './ClipboardItem.vue'
 
 const remote = useRemoteStore()
+
+function entriesForPeer(peerName) {
+  return remote.flatEntries.filter(e => e.peerName === peerName)
+}
 
 onMounted(() => {
   remote.fetchRemote()
@@ -17,24 +21,31 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="remote.peers.length > 0" class="flex flex-col">
-    <div class="flex items-center justify-between px-4 py-3 border-b border-color8">
-      <h1 class="text-sm font-semibold text-color5 tracking-widest uppercase">Remote Clipboard{{ remote.peers.length > 1 ? 's' : '' }}</h1>
-      <span class="text-[10px] text-color7">{{ remote.peers.length }} peer(s)</span>
-    </div>
-
-    <div v-for="peer in remote.peers" :key="peer.peerName" class="border-b border-color8/50">
-      <div class="px-4 py-1.5 bg-color0/50">
-        <span class="text-xs text-color4 font-medium">{{ peer.peerName }}</span>
-      </div>
-      <RemoteClipboardItem
-        v-for="entry in peer.entries"
-        :key="entry.id"
-        :entry="entry"
-      />
-      <p v-if="!peer.entries || peer.entries.length === 0" class="px-4 py-2 text-xs text-color7">
-        No entries from this peer.
+  <div class="flex flex-col h-full">
+    <div class="flex-1 overflow-y-auto">
+      <p v-if="remote.peers.length === 0" class="text-center text-color7 mt-8 text-sm">
+        No remote peers found.
       </p>
+      <template v-for="peer in remote.peers" :key="peer.peerName">
+        <div class="px-4 py-1.5 bg-color0/50 border-b border-color8">
+          <span class="text-xs text-color4 font-medium">{{ peer.peerName }}</span>
+        </div>
+        <p v-if="entriesForPeer(peer.peerName).length === 0" class="text-center text-color7 py-4 text-sm">
+          No content yet — copy something on the remote to see it here.
+        </p>
+        <ClipboardItem
+          v-for="entry in entriesForPeer(peer.peerName)"
+          :key="entry.id"
+          :entry="entry"
+          :index="remote.flatEntries.indexOf(entry)"
+          :selected="remote.flatEntries.indexOf(entry) === remote.selectedIndex"
+          :copied="remote.lastCopiedId === entry.id"
+          :expanded="remote.expandedIds.has(entry.id)"
+          :keyboard-active="remote.keyboardActive"
+          @copy="remote.copyItem(entry.id)"
+          @toggle-expand="remote.toggleExpanded(entry.id)"
+        />
+      </template>
     </div>
   </div>
 </template>

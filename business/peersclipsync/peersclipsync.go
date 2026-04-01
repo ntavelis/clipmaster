@@ -82,6 +82,21 @@ func (f *Fetcher) loop(ctx context.Context) {
 func (f *Fetcher) fetchAll() {
 	peers := f.discoverer.Peers()
 	changed := false
+
+	activePeers := make(map[string]struct{}, len(peers))
+	for _, p := range peers {
+		activePeers[p.Name] = struct{}{}
+	}
+
+	f.mu.Lock()
+	for name := range f.cache {
+		if _, ok := activePeers[name]; !ok {
+			delete(f.cache, name)
+			changed = true
+		}
+	}
+	f.mu.Unlock()
+
 	for _, p := range peers {
 		entries, err := f.fetchPeer(p)
 		if err != nil {
