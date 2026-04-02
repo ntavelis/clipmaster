@@ -34,7 +34,7 @@ type appConfig struct {
 		PollInterval time.Duration `conf:"default:1s"`
 	}
 	Peers struct {
-		PollInterval time.Duration `conf:"default:5s"`
+		PollInterval time.Duration `conf:"default:6s"`
 	}
 	conf.Version
 }

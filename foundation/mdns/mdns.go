@@ -30,6 +30,8 @@ type Peer struct {
 	Port int    `json:"port"`
 }
 
+const peerTTLCycles = 3
+
 // Discoverer registers this instance via mDNS and continuously browses for peers.
 type Discoverer struct {
 	log          *slog.Logger
@@ -39,6 +41,7 @@ type Discoverer struct {
 
 	mu       sync.RWMutex
 	peers    map[string]Peer
+	lastSeen map[string]int
 	hostname string
 }
 
@@ -48,6 +51,7 @@ func New(log *slog.Logger, browsePeriod time.Duration, hostname string) *Discove
 		log:          log,
 		browsePeriod: browsePeriod,
 		peers:        make(map[string]Peer),
+		lastSeen:     make(map[string]int),
 		hostname:     hostname,
 	}
 }
@@ -127,7 +131,7 @@ func (d *Discoverer) browse() {
 		close(entries)
 	}()
 
-	found := make(map[string]Peer)
+	seen := make(map[string]Peer)
 	for entry := range entries {
 		if d.myName != "" && strings.HasPrefix(entry.Name, d.myName) {
 			continue
@@ -140,7 +144,7 @@ func (d *Discoverer) browse() {
 			addr = entry.AddrV6.String()
 		}
 
-		found[entry.Name] = Peer{
+		seen[entry.Name] = Peer{
 			Name: entry.Name,
 			Addr: addr,
 			Port: entry.Port,
@@ -148,10 +152,22 @@ func (d *Discoverer) browse() {
 	}
 
 	d.mu.Lock()
-	d.peers = found
+	for name, peer := range seen {
+		d.peers[name] = peer
+		d.lastSeen[name] = 0
+	}
+	for name := range d.peers {
+		if _, ok := seen[name]; !ok {
+			d.lastSeen[name]++
+			if d.lastSeen[name] >= peerTTLCycles {
+				delete(d.peers, name)
+				delete(d.lastSeen, name)
+			}
+		}
+	}
 	d.mu.Unlock()
 
-	for _, p := range found {
+	for _, p := range seen {
 		d.log.Info("mdns peer discovered", "name", p.Name, "addr", p.Addr, "port", p.Port)
 	}
 }
