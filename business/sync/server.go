@@ -4,24 +4,26 @@ package sync
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
 )
 
-// Server is a lightweight HTTP server bound to a random OS-assigned port.
+// Server is a lightweight HTTPS server bound to a random OS-assigned port.
 type Server struct {
 	log      *slog.Logger
 	mux      *http.ServeMux
 	listener net.Listener
 	server   *http.Server
+	cert     tls.Certificate
 	port     int
 }
 
 // New creates a Server. Register routes via Handle, then call Start.
-func New(log *slog.Logger) *Server {
-	return &Server{log: log, mux: http.NewServeMux()}
+func New(log *slog.Logger, cert tls.Certificate) *Server {
+	return &Server{log: log, mux: http.NewServeMux(), cert: cert}
 }
 
 // Handle registers a handler for the given pattern.
@@ -37,12 +39,16 @@ func (s *Server) Start(_ context.Context) error {
 		return fmt.Errorf("sync server: listen: %w", err)
 	}
 
-	s.listener = ln
+	tlsListener := tls.NewListener(ln, &tls.Config{
+		Certificates: []tls.Certificate{s.cert},
+	})
+
+	s.listener = tlsListener
 	s.port = ln.Addr().(*net.TCPAddr).Port
 	s.server = &http.Server{Handler: s.mux}
 
 	go func() {
-		if err := s.server.Serve(ln); err != nil && err != http.ErrServerClosed {
+		if err := s.server.Serve(tlsListener); err != nil && err != http.ErrServerClosed {
 			s.log.Error("sync server: serve error", "error", err)
 		}
 	}()

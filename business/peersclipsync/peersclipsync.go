@@ -3,6 +3,7 @@ package peersclipsync
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -41,7 +42,12 @@ func New(log *slog.Logger, discoverer *fmdns.Discoverer, syncInterval time.Durat
 		log:          log,
 		discoverer:   discoverer,
 		syncInterval: syncInterval,
-		client:       &http.Client{Timeout: 5 * time.Second},
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+			},
+		},
 		cache:        make(map[string]PeerClipboard),
 	}
 }
@@ -115,7 +121,7 @@ func (f *Fetcher) fetchAll() {
 }
 
 func (f *Fetcher) fetchPeer(p fmdns.Peer) ([]clipboard.ClipboardEntry, error) {
-	url := fmt.Sprintf("http://%s:%d/api/clipboard", p.Addr, p.Port)
+	url := fmt.Sprintf("https://%s:%d/api/clipboard", p.Addr, p.Port)
 	resp, err := f.client.Get(url)
 	if err != nil {
 		return nil, err

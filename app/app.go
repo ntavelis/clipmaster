@@ -15,6 +15,7 @@ import (
 	"clipmaster/business/theme"
 	osclip "clipmaster/foundation/clipboard"
 	fmdns "clipmaster/foundation/mdns"
+	"clipmaster/foundation/tlscert"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -84,7 +85,14 @@ func (a *App) Startup(ctx context.Context) {
 		}
 	}
 
-	a.syncServer = bsync.New(a.log)
+	cert, err := tlscert.Generate()
+	if err != nil {
+		a.log.Error("failed to generate TLS cert", "error", err)
+		runtime.Quit(ctx)
+		return
+	}
+
+	a.syncServer = bsync.New(a.log, cert)
 	registerRoutes(a.syncServer, &handlers.ClipboardHandler{
 		Monitor:    a.monitor,
 		MaxHistory: a.cfg.RemoteClipboardsMaxHistory,
