@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { EventsOn } from '../wailsjs/runtime/runtime'
-import { GetTheme, NeedsPassphrase } from '../wailsjs/go/app/App'
+import { GetTheme, NeedsPassphrase, RemoteClipboardsEnabled } from '../wailsjs/go/app/App'
 import { useThemeStore } from './stores/theme'
 import { useClipboardStore } from './stores/clipboard'
 import { useRemoteStore } from './stores/remote'
@@ -13,19 +13,22 @@ const themeStore = useThemeStore()
 const clipboard = useClipboardStore()
 const remote = useRemoteStore()
 const needsSetup = ref(false)
+const remoteEnabled = ref(false)
+
 
 const showToast = computed(() => clipboard.lastCopiedId !== null || remote.lastCopiedId !== null)
 
-const shortcuts = [
+const allShortcuts = [
   { keys: 'Up / Down', action: 'Navigate items' },
   { keys: 'Enter', action: 'Copy selected item' },
   { keys: 'Space', action: 'Expand / collapse selected' },
   { keys: 'Escape', action: 'Collapse all / clear selection' },
   { keys: 'Ctrl+1..9', action: 'Quick copy Nth item' },
-  { keys: '[', action: 'Clipboard tab' },
-  { keys: ']', action: 'Remote tab' },
+  { keys: '[', action: 'Clipboard tab', remoteOnly: true },
+  { keys: ']', action: 'Remote tab', remoteOnly: true },
   { keys: 'Ctrl+K', action: 'Toggle this panel' },
 ]
+const shortcuts = computed(() => allShortcuts.filter(s => !s.remoteOnly || remoteEnabled.value))
 
 let lastMouseX = 0
 let lastMouseY = 0
@@ -42,11 +45,11 @@ function handleMouseMove(e) {
 }
 
 function handleKeydown(e) {
-  if (e.key === '[') {
+  if (e.key === '[' && remoteEnabled.value) {
     e.preventDefault()
     clipboard.activeTab = 'local'
     return
-  } else if (e.key === ']') {
+  } else if (e.key === ']' && remoteEnabled.value) {
     e.preventDefault()
     clipboard.activeTab = 'remote'
     return
@@ -97,6 +100,7 @@ onMounted(async () => {
     themeStore.applyColors(colors)
   }
 
+  remoteEnabled.value = await RemoteClipboardsEnabled()
   needsSetup.value = await NeedsPassphrase()
 
   window.addEventListener('keydown', handleKeydown)
@@ -117,13 +121,16 @@ onUnmounted(() => {
         class="px-4 py-2.5 text-xs font-semibold tracking-widest uppercase transition-colors border-b-2"
         :class="clipboard.activeTab === 'local' ? 'text-accent border-accent' : 'text-color7 border-transparent hover:text-foreground'"
         @click="clipboard.activeTab = 'local'"
+        @mousedown.prevent
       >
         Clipboard
       </button>
       <button
+        v-if="remoteEnabled"
         class="px-4 py-2.5 text-xs font-semibold tracking-widest uppercase transition-colors border-b-2"
         :class="clipboard.activeTab === 'remote' ? 'text-accent border-accent' : 'text-color7 border-transparent hover:text-foreground'"
         @click="clipboard.activeTab = 'remote'"
+        @mousedown.prevent
       >
         Remote Clipboard{{ remote.peers.length > 1 ? 's' : '' }}
         <span v-if="remote.peers.length > 0" class="ml-1.5 text-[10px] text-color7 normal-case tracking-normal">{{ remote.peers.length }}</span>
@@ -135,7 +142,7 @@ onUnmounted(() => {
 
     <div class="flex-1 overflow-hidden">
       <ClipboardHistory v-show="clipboard.activeTab === 'local'" />
-      <RemoteClipboard v-show="clipboard.activeTab === 'remote'" />
+      <RemoteClipboard v-if="remoteEnabled" v-show="clipboard.activeTab === 'remote'" />
     </div>
 
     <Transition

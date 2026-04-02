@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -31,6 +32,7 @@ type Config struct {
 	RemoteClipboardsPollInterval time.Duration
 	RemoteClipboardsMaxHistory   int
 	PeersPollInterval            time.Duration
+	DisableRemoteClipboards      bool
 }
 
 // App is the Wails bind target. It owns startup/shutdown and delegates to business packages.
@@ -62,14 +64,14 @@ func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	a.log.Info("starting application")
 
-	generic := clipboard.GenericClipboard{Ctx: ctx}
+	writter := clipboard.GenericClipboard{Ctx: ctx}
 	var reader clipboard.Reader
 	if a.useWayland {
 		reader = osclip.WaylandClipboard{}
 	} else {
-		reader = generic
+		reader = writter
 	}
-	a.monitor = clipboard.NewMonitor(reader, generic, a.cfg.MaxHistory, a.cfg.PollInterval)
+	a.monitor = clipboard.NewMonitor(reader, writter, a.cfg.MaxHistory, a.cfg.PollInterval)
 
 	if areWeRunningInOmarchy(a.cfg.ThemeColorPath) {
 		colors, err := theme.Load(a.cfg.ThemeColorPath)
@@ -89,16 +91,9 @@ func (a *App) Startup(ctx context.Context) {
 		}
 	}
 
-	if cfg, err := fconfig.Load(a.cfg.ConfigPath); err == nil && cfg.Passphrase != "" {
-		if err := passphrase.Validate(cfg.Passphrase); err != nil {
-			a.log.Error("invalid passphrase in config file — fix or delete ~/.config/clipmaster/config.json and restart", "error", err)
-			a.monitor.Stop()
-			os.Exit(1)
-		}
-		a.passphraseStore.Set(cfg.Passphrase)
-	}
+	validatePassphraseFromConfig(a)
 
-	if a.passphraseStore.Get() != "" {
+	if a.passphraseStore.Get() != "" && !a.cfg.DisableRemoteClipboards {
 		a.startNetworking()
 	}
 
@@ -148,8 +143,16 @@ func (a *App) GetTheme() theme.ThemeColors {
 	return a.colors
 }
 
+// RemoteClipboardsEnabled reports whether remote clipboard sync is enabled.
+func (a *App) RemoteClipboardsEnabled() bool {
+	return !a.cfg.DisableRemoteClipboards
+}
+
 // NeedsPassphrase reports whether a passphrase has not yet been configured.
 func (a *App) NeedsPassphrase() bool {
+	if a.cfg.DisableRemoteClipboards {
+		return false
+	}
 	cfg, err := fconfig.Load(a.cfg.ConfigPath)
 	return err != nil || cfg.Passphrase == ""
 }
@@ -165,6 +168,23 @@ func (a *App) SubmitPassphrase(p string) error {
 	a.passphraseStore.Set(p)
 	a.startNetworking()
 	return nil
+}
+
+// validatePassphraseFromConfig checks if a passphrase is already set in the config file, and if so validates it and sets it in the store.
+// If the passphrase is invalid, it logs an error and exits since the app can't function without a valid passphrase.
+func validatePassphraseFromConfig(a *App) {
+	if cfg, err := fconfig.Load(a.cfg.ConfigPath); err == nil && cfg.Passphrase != "" {
+		if err := passphrase.Validate(cfg.Passphrase); err != nil {
+			a.log.Error(
+				fmt.Sprintf("invalid passphrase in config file — fix or delete %s and restart", a.cfg.ConfigPath),
+				"error",
+				err,
+			)
+			a.monitor.Stop()
+			os.Exit(1)
+		}
+		a.passphraseStore.Set(cfg.Passphrase)
+	}
 }
 
 // startNetworking initialises the TLS sync server, mDNS discovery, and peer fetcher.

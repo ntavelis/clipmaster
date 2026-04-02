@@ -26,6 +26,10 @@ export function NeedsPassphrase() {
   return window['go']['app']['App']['NeedsPassphrase']();
 }
 
+export function RemoteClipboardsEnabled() {
+  return window['go']['app']['App']['RemoteClipboardsEnabled']();
+}
+
 export function SubmitPassphrase(arg1) {
   return window['go']['app']['App']['SubmitPassphrase'](arg1);
 }

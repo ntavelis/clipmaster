@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"clipmaster/app"
-	fconfig "clipmaster/foundation/config"
 	"clipmaster/foundation/logger"
 	"clipmaster/foundation/vcs"
 
@@ -35,6 +34,7 @@ type appConfig struct {
 	RemoteClipboards struct {
 		MaxHistory   int           `conf:"default:3,help:maximum number of remote clipboard entries to keep per peer"`
 		PollInterval time.Duration `conf:"default:1s,help:how often to fetch clipboard entries from remote peers"`
+		Disable      bool          `conf:"default:false,help:disable fetching clipboards from remote peers"`
 	}
 	Peers struct {
 		PollInterval time.Duration `conf:"default:2s,help:how often to browse for peers on the local network via mDNS"`
@@ -52,7 +52,7 @@ func main() {
 func run() error {
 	cfg := appConfig{
 		ThemeColorPath: filepath.Join(os.Getenv("HOME"), ".config/omarchy/current/theme/colors.toml"),
-		ConfigPath:     fconfig.DefaultPath(),
+		ConfigPath:     filepath.Join(os.Getenv("HOME"), ".config/clipmaster/config.json"),
 	}
 	cfg.Build = vcs.Version()
 
@@ -85,6 +85,7 @@ func run() error {
 		RemoteClipboardsPollInterval: cfg.RemoteClipboards.PollInterval,
 		RemoteClipboardsMaxHistory:   cfg.RemoteClipboards.MaxHistory,
 		PeersPollInterval:            cfg.Peers.PollInterval,
+		DisableRemoteClipboards:      cfg.RemoteClipboards.Disable,
 	})
 
 	if err := wails.Run(&options.App{

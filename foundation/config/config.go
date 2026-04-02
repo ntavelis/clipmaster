@@ -7,11 +7,6 @@ import (
 	"path/filepath"
 )
 
-// DefaultPath returns the default path for the config file.
-func DefaultPath() string {
-	return filepath.Join(os.Getenv("HOME"), ".config/clipmaster/config.json")
-}
-
 // Config holds persistent application configuration.
 type Config struct {
 	Passphrase string `json:"passphrase"`

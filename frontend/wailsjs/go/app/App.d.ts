@@ -16,4 +16,6 @@ export function GetTheme():Promise<theme.ThemeColors>;
 
 export function NeedsPassphrase():Promise<boolean>;
 
+export function RemoteClipboardsEnabled():Promise<boolean>;
+
 export function SubmitPassphrase(arg1:string):Promise<void>;
