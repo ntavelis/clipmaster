@@ -6,13 +6,23 @@ const emit = defineEmits(['done'])
 const passphrase = ref('')
 const error = ref('')
 
+function validate(value) {
+  if (value.length < 8) return 'Passphrase must be at least 8 characters'
+  if (value.length > 128) return 'Passphrase must be at most 128 characters'
+  if (value !== value.trimStart()) return 'Passphrase must not start with whitespace'
+  if (value !== value.trimEnd()) return 'Passphrase must not end with whitespace'
+  return ''
+}
+
 async function submit() {
-  if (passphrase.value.trim().length < 4) {
-    error.value = 'Passphrase must be at least 4 characters'
-    return
+  error.value = validate(passphrase.value)
+  if (error.value) return
+  try {
+    await SubmitPassphrase(passphrase.value)
+    emit('done')
+  } catch (e) {
+    error.value = e
   }
-  await SubmitPassphrase(passphrase.value.trim())
-  emit('done')
 }
 </script>
 
@@ -29,6 +39,7 @@ async function submit() {
         v-model="passphrase"
         type="password"
         placeholder="shared secret"
+        autofocus
         class="w-full rounded border border-color8 bg-background px-3 py-2 text-sm text-foreground placeholder-color7 focus:border-accent focus:outline-none"
         @keydown.enter="submit"
       />

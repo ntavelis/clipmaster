@@ -43,9 +43,11 @@ function handleMouseMove(e) {
 
 function handleKeydown(e) {
   if (e.key === '[') {
+    e.preventDefault()
     clipboard.activeTab = 'local'
     return
   } else if (e.key === ']') {
+    e.preventDefault()
     clipboard.activeTab = 'remote'
     return
   }

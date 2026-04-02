@@ -35,12 +35,12 @@ type Config struct {
 
 // App is the Wails bind target. It owns startup/shutdown and delegates to business packages.
 type App struct {
-	ctx         context.Context
-	log         *slog.Logger
-	cfg         Config
-	monitor     *clipboard.Monitor
-	colors      theme.ThemeColors
-	useWayland  bool
+	ctx             context.Context
+	log             *slog.Logger
+	cfg             Config
+	monitor         *clipboard.Monitor
+	colors          theme.ThemeColors
+	useWayland      bool
 	syncServer      *bsync.Server
 	discoverer      *fmdns.Discoverer
 	peerFetcher     *peersclipsync.Fetcher
@@ -89,7 +89,12 @@ func (a *App) Startup(ctx context.Context) {
 		}
 	}
 
-	if cfg, err := fconfig.Load(a.cfg.ConfigPath); err == nil {
+	if cfg, err := fconfig.Load(a.cfg.ConfigPath); err == nil && cfg.Passphrase != "" {
+		if err := passphrase.Validate(cfg.Passphrase); err != nil {
+			a.log.Error("invalid passphrase in config file — fix or delete ~/.config/clipmaster/config.json and restart", "error", err)
+			a.monitor.Stop()
+			os.Exit(1)
+		}
 		a.passphraseStore.Set(cfg.Passphrase)
 	}
 
@@ -149,12 +154,15 @@ func (a *App) NeedsPassphrase() bool {
 	return err != nil || cfg.Passphrase == ""
 }
 
-// SubmitPassphrase saves the passphrase provided by the user and starts networking.
-func (a *App) SubmitPassphrase(passphrase string) error {
-	if err := fconfig.Save(a.cfg.ConfigPath, fconfig.Config{Passphrase: passphrase}); err != nil {
+// SubmitPassphrase validates, saves the passphrase provided by the user, and starts networking.
+func (a *App) SubmitPassphrase(p string) error {
+	if err := passphrase.Validate(p); err != nil {
 		return err
 	}
-	a.passphraseStore.Set(passphrase)
+	if err := fconfig.Save(a.cfg.ConfigPath, fconfig.Config{Passphrase: p}); err != nil {
+		return err
+	}
+	a.passphraseStore.Set(p)
 	a.startNetworking()
 	return nil
 }
