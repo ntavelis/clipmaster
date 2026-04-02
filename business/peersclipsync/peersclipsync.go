@@ -42,6 +42,11 @@ func New(log *slog.Logger, discoverer *fmdns.Discoverer, syncInterval time.Durat
 		log:          log,
 		discoverer:   discoverer,
 		syncInterval: syncInterval,
+		// InsecureSkipVerify is set because peers use self-signed certificates generated
+		// in memory at startup with no CA. The standard TLS verification would always fail.
+		// A proper fix would be to have peers exchange their certificates via mDNS TXT records
+		// or a shared CA derived from the passphrase, so each peer can verify the other's cert
+		// without skipping verification entirely.
 		client: &http.Client{
 			Timeout: 5 * time.Second,
 			Transport: &http.Transport{
