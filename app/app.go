@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"time"
 
 	"clipmaster/app/handlers"
@@ -42,7 +41,6 @@ type App struct {
 	cfg             Config
 	monitor         *clipboard.Monitor
 	colors          theme.ThemeColors
-	useWayland      bool
 	syncServer      *bsync.Server
 	discoverer      *fmdns.Discoverer
 	peerFetcher     *peersclipsync.Fetcher
@@ -54,7 +52,6 @@ func NewApp(log *slog.Logger, cfg Config) *App {
 	return &App{
 		cfg:             cfg,
 		log:             log,
-		useWayland:      isWaylandAvailable(),
 		passphraseStore: &passphrase.Store{},
 	}
 }
@@ -65,11 +62,10 @@ func (a *App) Startup(ctx context.Context) {
 	a.log.Info("starting application")
 
 	writter := clipboard.GenericClipboard{Ctx: ctx}
-	var reader clipboard.Reader
-	if a.useWayland {
-		reader = osclip.WaylandClipboard{}
-	} else {
-		reader = writter
+	reader, err := osclip.NewReader()
+	if err != nil {
+		a.log.Error("clipboard unavailable", "error", err)
+		os.Exit(1)
 	}
 	a.monitor = clipboard.NewMonitor(reader, writter, a.cfg.MaxHistory, a.cfg.PollInterval)
 
@@ -223,10 +219,5 @@ func (a *App) startNetworking() {
 
 func areWeRunningInOmarchy(themeColorPath string) bool {
 	_, err := os.Stat(themeColorPath)
-	return err == nil
-}
-
-func isWaylandAvailable() bool {
-	_, err := exec.LookPath("wl-paste")
 	return err == nil
 }

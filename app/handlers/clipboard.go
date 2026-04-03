@@ -20,7 +20,7 @@ type ClipboardHandler struct {
 // GetClipboard returns the last N clipboard entries as JSON.
 // Returns 401 if the X-Clipmaster-Pass header is missing or incorrect.
 func (h *ClipboardHandler) GetClipboard(w http.ResponseWriter, r *http.Request) {
-	if subtle.ConstantTimeCompare([]byte(r.Header.Get("X-Clipmaster-Pass")), []byte(h.PassphraseStore.Get())) != 1 {
+	if subtle.ConstantTimeCompare([]byte(r.Header.Get("X-Clipmaster-Pass")), []byte(h.PassphraseStore.Hash())) != 1 {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}

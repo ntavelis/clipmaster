@@ -4,7 +4,6 @@ package mdns
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"io"
 	"log"
@@ -61,11 +60,6 @@ func New(log *slog.Logger, browsePeriod time.Duration, hostname string, ps *pass
 	}
 }
 
-func passphraseHash(passphrase string) string {
-	sum := sha256.Sum256([]byte(passphrase))
-	return fmt.Sprintf("%x", sum[:8])
-}
-
 // Register advertises this Clipmaster instance at the given port via mDNS.
 func (d *Discoverer) Register(port int) error {
 	instanceName := fmt.Sprintf("%s-%d", d.hostname, port)
@@ -76,7 +70,7 @@ func (d *Discoverer) Register(port int) error {
 		return ErrNoDiscoverableIPs
 	}
 
-	svc, err := mdns.NewMDNSService(instanceName, serviceType, domain, "", port, ips, []string{"version=1", "ph=" + passphraseHash(d.passphraseStore.Get())})
+	svc, err := mdns.NewMDNSService(instanceName, serviceType, domain, "", port, ips, []string{"version=1", "ph=" + d.passphraseStore.ShortHash()})
 	if err != nil {
 		return fmt.Errorf("mdns: creating service: %w", err)
 	}
@@ -210,7 +204,7 @@ func filterIPs(candidates []net.IP) []net.IP {
 }
 
 func (d *Discoverer) peerMatchesPassphrase(infoFields []string) bool {
-	hash := passphraseHash(d.passphraseStore.Get())
+	hash := d.passphraseStore.ShortHash()
 	for _, field := range infoFields {
 		if strings.HasPrefix(field, "ph=") {
 			return strings.TrimPrefix(field, "ph=") == hash
