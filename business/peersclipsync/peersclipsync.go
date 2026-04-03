@@ -24,10 +24,15 @@ type PeerClipboard struct {
 	Entries  []clipboard.ClipboardEntry `json:"entries"`
 }
 
+// peersProvider is satisfied by any type that can return a list of discovered peers.
+type peersProvider interface {
+	Peers() []fmdns.Peer
+}
+
 // Fetcher periodically fetches clipboard history from all discovered peers.
 type Fetcher struct {
 	log             *slog.Logger
-	discoverer      *fmdns.Discoverer
+	discoverer      peersProvider
 	syncInterval    time.Duration
 	passphraseStore *passphrase.Store
 	client          *http.Client
@@ -119,7 +124,8 @@ func (f *Fetcher) fetchAll() {
 		}
 		displayName := strings.SplitN(p.Name, ".", 2)[0]
 		f.mu.Lock()
-		if !sameEntryIDs(f.cache[p.Name].Entries, entries) {
+		existing, exists := f.cache[p.Name]
+		if !exists || !sameEntryIDs(existing.Entries, entries) {
 			f.cache[p.Name] = PeerClipboard{PeerName: displayName, Entries: entries}
 			changed = true
 		}
