@@ -27,3 +27,8 @@ tasks:
     desc: Start the application in development mode
     cmds:
       - wails dev
+
+  test:
+    desc: Run all Go tests
+    cmds:
+      - go test ./...

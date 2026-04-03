@@ -1,46 +1,124 @@
-// Package tlscert generates an in-memory self-signed TLS certificate.
+// Package tlscert generates in-memory TLS certificates for clipmaster peers.
 package tlscert
 
 import (
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"io"
 	"math/big"
 	"net"
 	"time"
+
+	"golang.org/x/crypto/hkdf"
 )
 
-// Generate creates a self-signed TLS certificate valid for 1 year.
+// deterministicP256Key derives a P-256 ECDSA private key from an HKDF reader.
+// ecdsa.GenerateKey is not deterministic even with a deterministic reader (Go injects
+// internal randomness), so we derive the scalar directly from HKDF bytes.
+func deterministicP256Key(reader io.Reader) (*ecdsa.PrivateKey, error) {
+	keyBytes := make([]byte, 32)
+	if _, err := io.ReadFull(reader, keyBytes); err != nil {
+		return nil, err
+	}
+
+	curve := elliptic.P256()
+	n := curve.Params().N
+	d := new(big.Int).SetBytes(keyBytes)
+	d.Mod(d, new(big.Int).Sub(n, big.NewInt(1)))
+	d.Add(d, big.NewInt(1))
+
+	x, y := curve.ScalarBaseMult(d.Bytes())
+	return &ecdsa.PrivateKey{
+		PublicKey: ecdsa.PublicKey{Curve: curve, X: x, Y: y},
+		D:        d,
+	}, nil
+}
+
+// GenerateCA derives a deterministic ECDSA P-256 CA certificate from seed.
+// All peers that share the same passphrase will derive the same CA and can
+// therefore verify each other's leaf certificates without InsecureSkipVerify.
+func GenerateCA(seed []byte) (tls.Certificate, *x509.Certificate, error) {
+	caKey, err := deterministicP256Key(hkdf.New(sha256.New, seed, []byte("clipmaster-ca-v1"), nil))
+	if err != nil {
+		return tls.Certificate{}, nil, err
+	}
+
+	template := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: "clipmaster-ca"},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(10 * 365 * 24 * time.Hour),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &caKey.PublicKey, caKey)
+	if err != nil {
+		return tls.Certificate{}, nil, err
+	}
+
+	caCert, err := x509.ParseCertificate(certDER)
+	if err != nil {
+		return tls.Certificate{}, nil, err
+	}
+
+	keyDER, err := x509.MarshalECPrivateKey(caKey)
+	if err != nil {
+		return tls.Certificate{}, nil, err
+	}
+
+	tlsCert, err := tls.X509KeyPair(
+		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER}),
+		pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyDER}),
+	)
+	if err != nil {
+		return tls.Certificate{}, nil, err
+	}
+
+	return tlsCert, caCert, nil
+}
+
+// GenerateLeaf creates a random ECDSA P-256 server certificate signed by the given CA.
 // The certificate includes SANs for all local IPs and localhost.
-func Generate() (tls.Certificate, error) {
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
+func GenerateLeaf(caCert *x509.Certificate, caKey crypto.PrivateKey) (tls.Certificate, error) {
+	leafKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return tls.Certificate{}, err
 	}
 
 	template := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
+		SerialNumber: big.NewInt(2),
 		Subject:      pkix.Name{CommonName: "clipmaster"},
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().Add(365 * 24 * time.Hour),
-		KeyUsage:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		KeyUsage:     x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		IPAddresses:  localIPs(),
 		DNSNames:     []string{"localhost"},
 	}
 
-	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	certDER, err := x509.CreateCertificate(rand.Reader, template, caCert, &leafKey.PublicKey, caKey)
 	if err != nil {
 		return tls.Certificate{}, err
 	}
 
-	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
-	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	keyDER, err := x509.MarshalECPrivateKey(leafKey)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
 
-	return tls.X509KeyPair(certPEM, keyPEM)
+	return tls.X509KeyPair(
+		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER}),
+		pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyDER}),
+	)
 }
 
 func localIPs() []net.IP {

@@ -42,6 +42,7 @@ type Store struct {
 	mu    sync.RWMutex
 	value string
 	hash  string
+	key   []byte
 }
 
 // Get returns the current passphrase.
@@ -67,7 +68,15 @@ func (s *Store) Set(passphrase string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.value = passphrase
+	s.key = key
 	s.hash = fmt.Sprintf("%x", key)
+}
+
+// KeyBytes returns the raw 32-byte Argon2id key computed when the passphrase was last set.
+func (s *Store) KeyBytes() []byte {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.key
 }
 
 // Hash returns the cached Argon2id hex digest computed when the passphrase was last set.

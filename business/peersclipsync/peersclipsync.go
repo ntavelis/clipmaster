@@ -4,6 +4,7 @@ package peersclipsync
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -44,24 +45,21 @@ type Fetcher struct {
 }
 
 // New creates a Fetcher. Call Start to begin periodic fetching.
-func New(log *slog.Logger, discoverer *fmdns.Discoverer, syncInterval time.Duration, ps *passphrase.Store) *Fetcher {
+// caPool must contain the shared CA certificate derived from the passphrase so that
+// peer leaf certificates can be verified without InsecureSkipVerify.
+func New(log *slog.Logger, discoverer *fmdns.Discoverer, syncInterval time.Duration, ps *passphrase.Store, caPool *x509.CertPool) *Fetcher {
 	return &Fetcher{
 		log:             log,
 		discoverer:      discoverer,
 		syncInterval:    syncInterval,
 		passphraseStore: ps,
-		// InsecureSkipVerify is set because peers use self-signed certificates generated
-		// in memory at startup with no CA. The standard TLS verification would always fail.
-		// A proper fix would be to have peers exchange their certificates via mDNS TXT records
-		// or a shared CA derived from the passphrase, so each peer can verify the other's cert
-		// without skipping verification entirely.
 		client: &http.Client{
 			Timeout: 5 * time.Second,
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+				TLSClientConfig: &tls.Config{RootCAs: caPool},
 			},
 		},
-		cache:        make(map[string]PeerClipboard),
+		cache: make(map[string]PeerClipboard),
 	}
 }
 

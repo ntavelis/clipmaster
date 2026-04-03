@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"log/slog"
 	"os"
@@ -184,13 +185,22 @@ func validatePassphraseFromConfig(configPath string, store *passphrase.Store) er
 // startNetworking initialises the TLS sync server, mDNS discovery, and peer fetcher.
 // It is called at startup when a passphrase is already configured, or on first SubmitPassphrase.
 func (a *App) startNetworking() {
-	cert, err := tlscert.Generate()
+	caTLSCert, caCert, err := tlscert.GenerateCA(a.passphraseStore.KeyBytes())
 	if err != nil {
-		a.log.Error("failed to generate TLS cert", "error", err)
+		a.log.Error("failed to generate CA cert", "error", err)
 		return
 	}
 
-	a.syncServer = bsync.New(a.log, cert)
+	leafCert, err := tlscert.GenerateLeaf(caCert, caTLSCert.PrivateKey)
+	if err != nil {
+		a.log.Error("failed to generate leaf cert", "error", err)
+		return
+	}
+
+	caPool := x509.NewCertPool()
+	caPool.AddCert(caCert)
+
+	a.syncServer = bsync.New(a.log, leafCert)
 	registerRoutes(a.syncServer, &handlers.ClipboardHandler{
 		Monitor:         a.monitor,
 		MaxHistory:      a.cfg.RemoteClipboardsMaxHistory,
@@ -208,7 +218,7 @@ func (a *App) startNetworking() {
 	}
 	a.discoverer.Start(a.ctx)
 
-	a.peerFetcher = peersclipsync.New(a.log, a.discoverer, a.cfg.RemoteClipboardsPollInterval, a.passphraseStore)
+	a.peerFetcher = peersclipsync.New(a.log, a.discoverer, a.cfg.RemoteClipboardsPollInterval, a.passphraseStore, caPool)
 	a.peerFetcher.OnUpdate = func() {
 		runtime.EventsEmit(a.ctx, "remote:updated")
 	}

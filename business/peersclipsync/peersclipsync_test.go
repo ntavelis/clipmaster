@@ -1,16 +1,14 @@
 package peersclipsync
 
 import (
-	"crypto/tls"
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"io"
 	"strconv"
 	"testing"
-	"time"
 
 	"clipmaster/business/clipboard"
 	"clipmaster/business/passphrase"
@@ -23,20 +21,15 @@ type mockDiscoverer struct {
 
 func (m *mockDiscoverer) Peers() []fmdns.Peer { return m.peers }
 
-func newTestFetcher(discoverer peersProvider) *Fetcher {
+func newTestFetcher(discoverer peersProvider, srvClient *http.Client) *Fetcher {
 	ps := &passphrase.Store{}
 	ps.Set("testpassword")
 	return &Fetcher{
 		log:             slog.New(slog.NewTextHandler(io.Discard, nil)),
 		discoverer:      discoverer,
 		passphraseStore: ps,
-		client: &http.Client{
-			Timeout: 2 * time.Second,
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
-			},
-		},
-		cache: make(map[string]PeerClipboard),
+		client:          srvClient,
+		cache:           make(map[string]PeerClipboard),
 	}
 }
 
@@ -53,7 +46,7 @@ func TestFetchAll_NewPeerEmptyClipboard(t *testing.T) {
 	defer srv.Close()
 
 	disc := &mockDiscoverer{peers: []fmdns.Peer{peerFromServer(srv)}}
-	f := newTestFetcher(disc)
+	f := newTestFetcher(disc, srv.Client())
 
 	updateCalled := false
 	f.OnUpdate = func() { updateCalled = true }
@@ -83,7 +76,7 @@ func TestFetchAll_NewPeerWithEntries(t *testing.T) {
 	defer srv.Close()
 
 	disc := &mockDiscoverer{peers: []fmdns.Peer{peerFromServer(srv)}}
-	f := newTestFetcher(disc)
+	f := newTestFetcher(disc, srv.Client())
 
 	updateCalled := false
 	f.OnUpdate = func() { updateCalled = true }
@@ -110,7 +103,7 @@ func TestFetchAll_ExistingPeerSameEntries(t *testing.T) {
 	defer srv.Close()
 
 	disc := &mockDiscoverer{peers: []fmdns.Peer{peerFromServer(srv)}}
-	f := newTestFetcher(disc)
+	f := newTestFetcher(disc, srv.Client())
 	f.fetchAll()
 
 	updateCount := 0
@@ -139,7 +132,7 @@ func TestFetchAll_ExistingPeerUpdatedEntries(t *testing.T) {
 	defer srv.Close()
 
 	disc := &mockDiscoverer{peers: []fmdns.Peer{peerFromServer(srv)}}
-	f := newTestFetcher(disc)
+	f := newTestFetcher(disc, srv.Client())
 	f.fetchAll()
 
 	updateCalled := false
@@ -164,7 +157,7 @@ func TestFetchAll_PeerDisappears(t *testing.T) {
 	defer srv.Close()
 
 	disc := &mockDiscoverer{peers: []fmdns.Peer{peerFromServer(srv)}}
-	f := newTestFetcher(disc)
+	f := newTestFetcher(disc, srv.Client())
 	f.fetchAll()
 
 	disc.peers = nil
@@ -188,7 +181,7 @@ func TestFetchAll_FetchFails(t *testing.T) {
 	defer srv.Close()
 
 	disc := &mockDiscoverer{peers: []fmdns.Peer{peerFromServer(srv)}}
-	f := newTestFetcher(disc)
+	f := newTestFetcher(disc, srv.Client())
 
 	updateCalled := false
 	f.OnUpdate = func() { updateCalled = true }
