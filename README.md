@@ -100,4 +100,8 @@ Go code from devtools.
 
 ## Building
 
-To build a redistributable, production mode package, use `wails build`.
+To build a redistributable, production mode package, run:
+
+```bash
+task app:build
+```
