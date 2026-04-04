@@ -10,6 +10,8 @@ export function CopyRemoteImage(arg1:string):Promise<void>;
 
 export function CopyRemoteItem(arg1:string):Promise<void>;
 
+export function GetConfigPath():Promise<string>;
+
 export function GetHistory():Promise<Array<clipboard.ClipboardEntry>>;
 
 export function GetRemoteClipboards():Promise<Array<peersclipsync.PeerClipboard>>;

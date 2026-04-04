@@ -152,6 +152,11 @@ func (a *App) RemoteClipboardsEnabled() bool {
 	return !a.cfg.DisableRemoteClipboards
 }
 
+// GetConfigPath returns the path to the configuration file.
+func (a *App) GetConfigPath() string {
+	return a.cfg.ConfigPath
+}
+
 // NeedsPassphrase reports whether a passphrase has not yet been configured.
 func (a *App) NeedsPassphrase() bool {
 	if a.cfg.DisableRemoteClipboards {

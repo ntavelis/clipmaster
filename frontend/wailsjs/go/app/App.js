@@ -14,6 +14,10 @@ export function CopyRemoteItem(arg1) {
   return window['go']['app']['App']['CopyRemoteItem'](arg1);
 }
 
+export function GetConfigPath() {
+  return window['go']['app']['App']['GetConfigPath']();
+}
+
 export function GetHistory() {
   return window['go']['app']['App']['GetHistory']();
 }

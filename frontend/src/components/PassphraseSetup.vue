@@ -1,10 +1,15 @@
 <script setup>
-import { ref } from 'vue'
-import { SubmitPassphrase } from '../../wailsjs/go/app/App'
+import { ref, onMounted } from 'vue'
+import { SubmitPassphrase, GetConfigPath } from '../../wailsjs/go/app/App'
 
 const emit = defineEmits(['done'])
 const passphrase = ref('')
 const error = ref('')
+const configPath = ref('')
+
+onMounted(async () => {
+  configPath.value = await GetConfigPath()
+})
 
 function validate(value) {
   if (value.length < 8) return 'Passphrase must be at least 8 characters'
@@ -53,7 +58,7 @@ async function submit() {
       </button>
 
       <p class="mt-3 text-center text-[10px] text-color7">
-        Stored locally in ~/.config/clipmaster/config.json
+        Stored locally in {{ configPath }}
       </p>
     </div>
   </div>

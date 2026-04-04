@@ -1,0 +1,30 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Fixed
+
+- Passphrase setup screen now shows the actual config file path instead of a hardcoded default
+
+## [0.0.1] - 2026-04-04
+
+This is the initial release.
+
+A desktop clipboard manager for Omarchy, works in Linux and macOS. It tracks your clipboard's history, lets you browse and copy items and is designed for a keyboard-first workflows.
+
+When you run it on multiple machines peers will form a secure mesh, where they will auto-discover each other on the local network and share their clipboards.
+
+It works on Linux and macOS, but it loves Omarchy, hot-reloading its color scheme the moment your OS theme changes.
+
+### Added
+
+- In-memory clipboard history text and images (PNG), up to 50 items (configurable)
+- Keyboard navigation with shortcuts for quick copying (Ctrl+1..9)
+- Expandable entries for viewing long text or larger image previews
+- Live Omarchy theme support, colors update automatically when you switch themes
+- Secure multi-machine sync, peers discover each other via mDNS and sync over HTTPS with certificate validation and a shared passphrase; only machines with the same passphrase can connect
