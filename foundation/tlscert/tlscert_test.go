@@ -1,7 +1,7 @@
 package tlscert
 
 import (
-	"crypto/ecdsa"
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -23,10 +23,17 @@ func TestGenerateCA_Deterministic(t *testing.T) {
 		t.Fatalf("GenerateCA #2: %v", err)
 	}
 
-	pub1 := caCert1.PublicKey.(*ecdsa.PublicKey)
-	pub2 := caCert2.PublicKey.(*ecdsa.PublicKey)
+	pub1Bytes, err := x509.MarshalPKIXPublicKey(caCert1.PublicKey)
+	if err != nil {
+		t.Fatalf("MarshalPKIXPublicKey #1: %v", err)
+	}
 
-	if pub1.X.Cmp(pub2.X) != 0 || pub1.Y.Cmp(pub2.Y) != 0 {
+	pub2Bytes, err := x509.MarshalPKIXPublicKey(caCert2.PublicKey)
+	if err != nil {
+		t.Fatalf("MarshalPKIXPublicKey #2: %v", err)
+	}
+
+	if !bytes.Equal(pub1Bytes, pub2Bytes) {
 		t.Fatal("CA public keys differ for the same seed")
 	}
 

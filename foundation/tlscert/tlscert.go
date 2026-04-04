@@ -3,6 +3,7 @@ package tlscert
 
 import (
 	"crypto"
+	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -11,6 +12,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"io"
 	"math/big"
 	"net"
@@ -28,17 +30,36 @@ func deterministicP256Key(reader io.Reader) (*ecdsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	curve := elliptic.P256()
-	n := curve.Params().N
+	n := elliptic.P256().Params().N
 	d := new(big.Int).SetBytes(keyBytes)
 	d.Mod(d, new(big.Int).Sub(n, big.NewInt(1)))
 	d.Add(d, big.NewInt(1))
 
-	x, y := curve.ScalarBaseMult(d.Bytes())
-	return &ecdsa.PrivateKey{
-		PublicKey: ecdsa.PublicKey{Curve: curve, X: x, Y: y},
-		D:        d,
-	}, nil
+	dBytes := make([]byte, 32)
+	dRaw := d.Bytes()
+	copy(dBytes[32-len(dRaw):], dRaw)
+
+	ecdhKey, err := ecdh.P256().NewPrivateKey(dBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	der, err := x509.MarshalPKCS8PrivateKey(ecdhKey)
+	if err != nil {
+		return nil, err
+	}
+
+	parsed, err := x509.ParsePKCS8PrivateKey(der)
+	if err != nil {
+		return nil, err
+	}
+
+	ecdsaKey, ok := parsed.(*ecdsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("unexpected key type %T", parsed)
+	}
+
+	return ecdsaKey, nil
 }
 
 // GenerateCA derives a deterministic ECDSA P-256 CA certificate from seed.
