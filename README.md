@@ -43,7 +43,7 @@ the binary.
 ##### Debian / Ubuntu
 
 ```bash
-sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37 wl-clipboard
+sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0 xclip
 curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-linux-amd64 -o clipmaster
 sudo install -m 755 clipmaster /usr/local/bin/clipmaster
 ```
@@ -51,7 +51,7 @@ sudo install -m 755 clipmaster /usr/local/bin/clipmaster
 ##### Arch Linux
 
 ```bash
-sudo pacman -S --needed gtk3 webkit2gtk wl-clipboard
+sudo pacman -S --needed gtk3 webkit2gtk-4.1 wl-clipboard
 curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-linux-amd64 -o clipmaster
 sudo install -m 755 clipmaster /usr/local/bin/clipmaster
 ```
@@ -59,7 +59,7 @@ sudo install -m 755 clipmaster /usr/local/bin/clipmaster
 ##### Fedora / RHEL
 
 ```bash
-sudo dnf install gtk3 webkit2gtk3 wl-clipboard
+sudo dnf install gtk3 webkit2gtk4.1 wl-clipboard
 curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-linux-amd64 -o clipmaster
 sudo install -m 755 clipmaster /usr/local/bin/clipmaster
 ```
@@ -67,7 +67,7 @@ sudo install -m 755 clipmaster /usr/local/bin/clipmaster
 ##### openSUSE
 
 ```bash
-sudo zypper install libgtk-3-0 libwebkit2gtk-4_0-37 wl-clipboard
+sudo zypper install libgtk-3-0 libwebkit2gtk-4_1-0 xclip
 curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-linux-amd64 -o clipmaster
 sudo install -m 755 clipmaster /usr/local/bin/clipmaster
 ```
