@@ -1,12 +1,12 @@
 # Clipmaster
 
 A desktop clipboard manager for Omarchy, works in Linux and macOS. It tracks your
-clipboard's history, lets you browse and copy items, that is designed for
+clipboard's history, lets you browse and copy items and is designed for a
 keyboard-first workflows.
 
 <https://github.com/user-attachments/assets/434b6ff6-21e1-459b-833f-7f63c5a9ee88>
 
-When you run it on multiple machines they will form a secure mesh, where peers auto-discover
+When you run it on multiple machines peers will form a secure mesh, where they will auto-discover
 each other on the local network and share their clipboards.
 
 It works on Linux and macOS, but it loves [Omarchy](https://omarchy.org),
