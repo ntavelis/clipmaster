@@ -6,6 +6,8 @@
 - Build targets: linux/amd64, linux/arm64, darwin/amd64, darwin/arm64
 - Upload artifacts to GitHub Releases with consistent naming:
   `clipmaster-linux-amd64`, `clipmaster-linux-arm64`, `clipmaster-darwin-amd64`, `clipmaster-darwin-arm64`
+- Upload `appicon.png` (`build/appicon.png`) as a release asset — `install.sh`
+  downloads it to install the desktop icon on Linux
 - `install.sh` (already in repo root) will download from these release URLs
 - **Build strategy:** all native builds on matching runners — no cross-compilation
   - `ubuntu-latest` → linux/amd64

@@ -5,6 +5,8 @@ REPO="ntavelis/clipmaster"
 BINARY="clipmaster"
 INSTALL_DIR="/usr/local/bin"
 DESKTOP_DIR="${HOME}/.local/share/applications"
+ICON_DIR="${HOME}/.local/share/icons"
+ICON_URL="https://github.com/${REPO}/releases/latest/download/appicon.png"
 
 # Detect OS
 OS="$(uname -s)"
@@ -77,14 +79,23 @@ chmod +x "${TMP_FILE}"
 echo "Installing to ${INSTALL_DIR}/${BINARY}..."
 sudo mv "${TMP_FILE}" "${INSTALL_DIR}/${BINARY}"
 
-# Create .desktop entry (Linux only)
-create_desktop_entry() {
+# Download icon and create .desktop entry (Linux only)
+install_desktop_linux() {
+  mkdir -p "${ICON_DIR}"
+  echo "Downloading icon..."
+  if command -v curl &>/dev/null; then
+    curl -fsSL "${ICON_URL}" -o "${ICON_DIR}/clipmaster.png"
+  elif command -v wget &>/dev/null; then
+    wget -qO "${ICON_DIR}/clipmaster.png" "${ICON_URL}"
+  fi
+
   mkdir -p "${DESKTOP_DIR}"
   cat > "${DESKTOP_DIR}/clipmaster.desktop" <<EOF
 [Desktop Entry]
 Name=Clipmaster
 Comment=Clipboard manager with multi-machine sync
 Exec=${INSTALL_DIR}/${BINARY}
+Icon=${ICON_DIR}/clipmaster.png
 Type=Application
 Categories=Utility;
 Terminal=false
@@ -93,7 +104,7 @@ EOF
 }
 
 if [ "${OS}" = "linux" ]; then
-  create_desktop_entry
+  install_desktop_linux
 fi
 
 echo "Clipmaster installed successfully. Run 'clipmaster' to start."
