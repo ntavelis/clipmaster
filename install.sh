@@ -60,20 +60,9 @@ install_deps_linux() {
 
   echo "Detected display server: ${clip_backend}"
 
-  # amd64 builds against webkit2gtk 4.0, arm64 against 4.1
-  if [ "${ARCH}" = "amd64" ]; then
-    WEBKIT_APT="libwebkit2gtk-4.0-37"
-    WEBKIT_DNF="webkit2gtk4.0"
-    WEBKIT_ZYP="libwebkit2gtk-4_0-37"
-  else
-    WEBKIT_APT="libwebkit2gtk-4.1-0"
-    WEBKIT_DNF="webkit2gtk4.1"
-    WEBKIT_ZYP="libwebkit2gtk-4_1-0"
-  fi
-
   if command -v apt-get &>/dev/null; then
     echo "Installing dependencies via apt..."
-    sudo apt-get install -y libgtk-3-0 ${WEBKIT_APT} ${CLIP_PKGS}
+    sudo apt-get install -y libgtk-3-0 libwebkit2gtk-4.1-0 ${CLIP_PKGS}
   elif command -v pacman &>/dev/null; then
     echo "Installing dependencies via pacman..."
     sudo pacman -S --needed --noconfirm gtk3 webkit2gtk ${CLIP_PKGS}
@@ -82,21 +71,21 @@ install_deps_linux() {
     sudo apk add --no-cache gtk+3.0 webkit2gtk ${CLIP_PKGS}
   elif command -v rpm-ostree &>/dev/null; then
     echo "Installing dependencies via rpm-ostree (Fedora Atomic)..."
-    sudo rpm-ostree install -y --idempotent --allow-inactive --apply-live gtk3 ${WEBKIT_DNF} ${CLIP_PKGS}
+    sudo rpm-ostree install -y --idempotent --allow-inactive --apply-live gtk3 webkit2gtk4.1 ${CLIP_PKGS}
   elif command -v dnf &>/dev/null; then
     echo "Installing dependencies via dnf..."
-    sudo dnf install -y gtk3 ${WEBKIT_DNF} ${CLIP_PKGS}
+    sudo dnf install -y gtk3 webkit2gtk4.1 ${CLIP_PKGS}
   elif command -v xbps-install &>/dev/null; then
     echo "Installing dependencies via xbps (Void Linux)..."
     sudo xbps-install -Sy gtk+3 webkit2gtk ${CLIP_PKGS}
   elif command -v zypper &>/dev/null; then
     echo "Installing dependencies via zypper..."
-    sudo zypper install -y libgtk-3-0 ${WEBKIT_ZYP} ${CLIP_PKGS}
+    sudo zypper install -y libgtk-3-0 libwebkit2gtk-4_1-0 ${CLIP_PKGS}
   else
     echo "No supported package manager found (apt, pacman, apk, rpm-ostree, dnf, xbps, zypper)."
     echo "Please install the following libraries manually:"
     echo "  - GTK 3 runtime"
-    echo "  - WebKit2GTK (4.0 for amd64, 4.1 for arm64)"
+    echo "  - WebKit2GTK 4.1 runtime"
     echo "  - A clipboard tool (wl-clipboard for Wayland, xclip for X11)"
     exit 1
   fi

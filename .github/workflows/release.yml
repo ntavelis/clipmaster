@@ -31,18 +31,17 @@ jobs:
 
       - name: Install Linux dependencies
         run: |
-          echo "deb http://archive.ubuntu.com/ubuntu jammy main universe" | sudo tee /etc/apt/sources.list.d/jammy.list
           sudo apt-get update
           sudo apt-get install -y \
             libgtk-3-dev \
-            libwebkit2gtk-4.0-dev \
+            libwebkit2gtk-4.1-dev \
             pkg-config
 
       - name: Build
         run: |
           REVISION=$(git rev-parse HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -platform linux/amd64 -ldflags "-X clipmaster/foundation/vcs.Revision=${REVISION} -X clipmaster/foundation/vcs.Modified=${MODIFIED}"
+          wails build -tags webkit2_41 -platform linux/amd64 -ldflags "-X clipmaster/foundation/vcs.Revision=${REVISION} -X clipmaster/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
