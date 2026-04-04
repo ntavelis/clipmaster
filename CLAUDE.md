@@ -10,11 +10,11 @@ A Wails desktop clipboard manager that tracks clipboard history and syncs across
 - **Frontend**: Vue 3 + Vite + Pinia
 - **CSS**: TailwindCSS only — no other CSS frameworks, no custom CSS classes outside of Tailwind utilities
 - **Peer Discovery**: mDNS via `hashicorp/mdns` (`_clipmaster._tcp` service type)
-- **Sync Transport**: HTTPS with self-signed TLS certificates (no CA — `InsecureSkipVerify`)
+- **Sync Transport**: HTTPS with TLS — a CA cert is derived from the passphrase and used to sign a leaf cert; peers validate against this CA (no `InsecureSkipVerify`)
 
 ## Features
 
-1. **Clipboard history** — continuously poll/monitor the system clipboard and store a history of copied items (text only for now)
+1. **Clipboard history** — continuously poll/monitor the system clipboard and store a history of copied items (text and PNG images)
 2. **History UI** — browse and re-copy from clipboard history
 3. **Multi-machine sync** — peers discover each other via mDNS and pull each other's clipboard over HTTPS
 4. **Omarchy theming** — automatically reads the active Omarchy color theme and applies it to the UI; colors update live when the theme changes
@@ -23,19 +23,20 @@ A Wails desktop clipboard manager that tracks clipboard history and syncs across
 ## Clipboard History
 
 - In-memory only (no persistence across restarts)
-- Default max: 50 items (`CLIPMASTER_CLIPBOARD_MAX_HISTORY`)
-- Text only (no image support yet)
-- Wayland-aware: uses `wl-paste`/`wl-copy` if available, falls back to Wails runtime clipboard
+- Default max: 50 items, configurable via `CLIPMASTER_CLIPBOARD_MAX_HISTORY`
+- Supports text and PNG images (max 5 MB per image); content type is either `"text"` or `"image"`
+- Images stored as base64-encoded PNG in `ClipboardEntry.ImageData`; SHA-256 used for duplicate detection
+- Wayland-aware: uses `wl-paste`/`wl-copy` if available; falls back through xclip → xsel → macOS osascript → macOS pbpaste
 
 ## Multi-Machine Sync (mDNS + HTTPS)
 
-- Each instance starts an HTTPS server on a random OS-assigned port with a self-signed RSA-2048 cert
-- mDNS advertises the port and a SHA-256 hash (first 8 bytes) of the passphrase in TXT records
-- Peers filter by passphrase hash — only instances sharing the same passphrase connect
-- Peer fetcher polls all discovered peers at 1s intervals: `GET /api/clipboard` with `X-Clipmaster-Pass` header
-- Handler uses `subtle.ConstantTimeCompare` to validate the passphrase (timing-attack resistant)
-- `InsecureSkipVerify` is intentional — certs are self-signed with no CA; mDNS passphrase filtering is the security boundary
-- Peers expire after ~3 poll cycles (~6s) if not seen again
+- Each instance starts an HTTPS server on a random OS-assigned port
+- TLS: a CA cert is derived from the passphrase key bytes and used to sign a leaf cert; peers validate against this CA — no `InsecureSkipVerify`
+- mDNS advertises the port with TXT records: `version=1` and `ph=<first 16 hex chars of Argon2id passphrase hash>`
+- Peers filter by `ph=` — only instances sharing the same passphrase connect
+- Peer fetcher polls all discovered peers: `GET /api/clipboard` with `X-Clipmaster-Pass` header; handler validates with `subtle.ConstantTimeCompare` (timing-attack resistant)
+- Images are fetched separately: metadata-only on `GET /api/clipboard`, then `GET /api/clipboard/{id}/image` for PNG bytes
+- Peers expire after ~3 missed browse cycles (~6s)
 
 ## Passphrase
 
@@ -44,6 +45,7 @@ A Wails desktop clipboard manager that tracks clipboard history and syncs across
 - Loaded at startup; if invalid, the app logs an error and exits immediately
 - On first launch (no config), the UI shows a passphrase setup screen before enabling networking
 - If `DisableRemoteClipboards` is true, passphrase is never required
+- The passphrase is the single security boundary: it derives the TLS CA cert, is hashed (Argon2id) into mDNS TXT records for peer filtering, and is validated on every HTTP request
 
 ## Omarchy Theming
 

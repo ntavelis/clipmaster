@@ -7,6 +7,11 @@
 - Upload artifacts to GitHub Releases with consistent naming:
   `clipmaster-linux-amd64`, `clipmaster-linux-arm64`, `clipmaster-darwin-amd64`, `clipmaster-darwin-arm64`
 - `install.sh` (already in repo root) will download from these release URLs
+- **Build strategy:** all native builds on matching runners — no cross-compilation
+  - `ubuntu-latest` → linux/amd64
+  - `ubuntu-24.04-arm` → linux/arm64
+  - `macos-latest` → darwin/amd64
+  - `macos-14` → darwin/arm64 (Apple Silicon)
 
 ## 2. Cross-Platform Testing
 
