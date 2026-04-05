@@ -105,3 +105,19 @@ To build a redistributable, production ready package, run:
 ```bash
 task app:build
 ```
+
+## Known Limitations
+
+### Clipboard monitoring on GNOME/Mutter (Wayland)
+
+On desktops that use GNOME's Mutter compositor (Fedora, Ubuntu, Pop!_OS, etc.),
+clipboard monitoring may cause brief focus flicker. This is a Wayland security
+restriction: the standard clipboard protocol only delivers content to the
+focused window, so `wl-paste` must briefly acquire focus on each poll cycle.
+
+Compositors built on wlroots (Hyprland, Sway, etc.) are not affected because
+they support the `wlr-data-control` protocol, which allows background clipboard
+access without focus changes. On these compositors, clipmaster uses event-driven
+watching with `wl-paste --watch` and no polling is needed.
+
+X11 sessions and macOS are also unaffected.

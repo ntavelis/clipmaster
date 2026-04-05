@@ -18,17 +18,9 @@ func TestNewReaderWriter(t *testing.T) {
 	tests := []struct {
 		name        string
 		available   []string
-		forceXclip  bool
-		gtkAvail    bool
 		wantBackend string
 		wantErr     bool
 	}{
-		{
-			name:        "gtk preferred over all CLI backends",
-			available:   []string{"wl-paste", "xclip"},
-			gtkAvail:    true,
-			wantBackend: "gtk3 (native)",
-		},
 		{
 			name:        "wayland selected when wl-paste available",
 			available:   []string{"wl-paste"},
@@ -50,8 +42,13 @@ func TestNewReaderWriter(t *testing.T) {
 			wantBackend: "x11 (xsel)",
 		},
 		{
-			name:        "darwin osascript preferred over pbpaste alone",
-			available:   []string{"pbpaste", "osascript"},
+			name:        "darwin osascript selected when available",
+			available:   []string{"osascript"},
+			wantBackend: "darwin (osascript)",
+		},
+		{
+			name:        "darwin osascript preferred over pbpaste",
+			available:   []string{"osascript", "pbpaste"},
 			wantBackend: "darwin (osascript)",
 		},
 		{
@@ -63,39 +60,15 @@ func TestNewReaderWriter(t *testing.T) {
 			name:    "error when nothing available",
 			wantErr: true,
 		},
-		{
-			name:        "force xclip overrides wl-paste",
-			available:   []string{"wl-paste", "xclip"},
-			forceXclip:  true,
-			wantBackend: "x11 (xclip, forced)",
-		},
-		{
-			name:       "force xclip errors when xclip not available",
-			available:  []string{"wl-paste"},
-			forceXclip: true,
-			wantErr:    true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			originalAvail := availableFn
-			originalGTK := newGTKBackendFn
+			original := availableFn
 			availableFn = mockAvailable(tt.available...)
-			if tt.gtkAvail {
-				newGTKBackendFn = func() (Reader, Writer, string, bool) {
-					g := GTKClipboard{}
-					return g, g, "gtk3 (native)", true
-				}
-			} else {
-				newGTKBackendFn = func() (Reader, Writer, string, bool) { return nil, nil, "", false }
-			}
-			t.Cleanup(func() {
-				availableFn = originalAvail
-				newGTKBackendFn = originalGTK
-			})
+			t.Cleanup(func() { availableFn = original })
 
-			_, _, backend, err := NewReaderWriter(tt.forceXclip)
+			_, _, backend, err := NewReaderWriter()
 
 			if tt.wantErr {
 				if err == nil {

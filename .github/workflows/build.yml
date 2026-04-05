@@ -38,8 +38,7 @@ jobs:
           version: v2.11.4
 
   build-amd64:
-    # TODO: revert to schedule-only builds when done testing
-    # if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule'
     needs: [test, lint]
     runs-on: ubuntu-latest
     steps:

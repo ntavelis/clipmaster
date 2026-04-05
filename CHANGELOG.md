@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-04-05
+
+### Added
+
+- Log selected clipboard backend at startup
+- Known limitations section in README documenting GNOME/Mutter Wayland focus flicker
+
+### Changed
+
+- Default clipboard poll interval from 500ms to 2s
+- Default remote clipboards poll interval from 1s to 2s
+- Darwin osascript backend is now a top-level case in the selection order, preferred over pbpaste
+
+### Fixed
+
+- Clipboard monitor now falls back to polling when `wl-paste --watch` exits immediately on compositors without `wlr-data-control` support (e.g. GNOME/Mutter)
+
 ## [0.0.2] - 2026-04-05
 
 ### Changed

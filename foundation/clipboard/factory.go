@@ -23,22 +23,9 @@ type Writer interface {
 }
 
 // NewReaderWriter returns the first available clipboard reader and writer by probing known binaries in order:
-// wl-paste (Wayland) → xclip (X11) → xsel (X11) → pbpaste (macOS).
-// If forceXclip is true, xclip is used regardless of other available backends.
+// wl-paste (Wayland) → xclip (X11) → xsel (X11) → osascript (macOS) → pbpaste (macOS).
 // The returned string identifies the selected backend.
-func NewReaderWriter(forceXclip bool) (Reader, Writer, string, error) {
-	if forceXclip {
-		if !availableFn("xclip") {
-			return nil, nil, "", errors.New("xclip forced but not found")
-		}
-		x := XclipClipboard{}
-		return x, x, "x11 (xclip, forced)", nil
-	}
-
-	if r, w, name, ok := newGTKBackendFn(); ok {
-		return r, w, name, nil
-	}
-
+func NewReaderWriter() (Reader, Writer, string, error) {
 	switch {
 	case availableFn("wl-paste"):
 		w := WaylandClipboard{}
@@ -49,11 +36,10 @@ func NewReaderWriter(forceXclip bool) (Reader, Writer, string, error) {
 	case availableFn("xsel"):
 		s := XselClipboard{}
 		return s, s, "x11 (xsel)", nil
+	case availableFn("osascript"):
+		o := DarwinOsascriptClipboard{}
+		return o, o, "darwin (osascript)", nil
 	case availableFn("pbpaste"):
-		if availableFn("osascript") {
-			o := DarwinOsascriptClipboard{}
-			return o, o, "darwin (osascript)", nil
-		}
 		d := DarwinClipboard{}
 		return d, d, "darwin (pbpaste)", nil
 	default:
@@ -61,10 +47,7 @@ func NewReaderWriter(forceXclip bool) (Reader, Writer, string, error) {
 	}
 }
 
-var (
-	availableFn     = available
-	newGTKBackendFn = newGTKBackend
-)
+var availableFn = available
 
 func available(bin string) bool {
 	_, err := exec.LookPath(bin)
