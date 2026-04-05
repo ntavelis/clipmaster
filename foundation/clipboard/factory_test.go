@@ -19,9 +19,16 @@ func TestNewReaderWriter(t *testing.T) {
 		name        string
 		available   []string
 		forceXclip  bool
+		gtkAvail    bool
 		wantBackend string
 		wantErr     bool
 	}{
+		{
+			name:        "gtk preferred over all CLI backends",
+			available:   []string{"wl-paste", "xclip"},
+			gtkAvail:    true,
+			wantBackend: "gtk3 (native)",
+		},
 		{
 			name:        "wayland selected when wl-paste available",
 			available:   []string{"wl-paste"},
@@ -72,9 +79,21 @@ func TestNewReaderWriter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			original := availableFn
+			originalAvail := availableFn
+			originalGTK := newGTKBackendFn
 			availableFn = mockAvailable(tt.available...)
-			t.Cleanup(func() { availableFn = original })
+			if tt.gtkAvail {
+				newGTKBackendFn = func() (Reader, Writer, string, bool) {
+					g := GTKClipboard{}
+					return g, g, "gtk3 (native)", true
+				}
+			} else {
+				newGTKBackendFn = func() (Reader, Writer, string, bool) { return nil, nil, "", false }
+			}
+			t.Cleanup(func() {
+				availableFn = originalAvail
+				newGTKBackendFn = originalGTK
+			})
 
 			_, _, backend, err := NewReaderWriter(tt.forceXclip)
 

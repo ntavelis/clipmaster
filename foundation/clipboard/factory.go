@@ -35,6 +35,10 @@ func NewReaderWriter(forceXclip bool) (Reader, Writer, string, error) {
 		return x, x, "x11 (xclip, forced)", nil
 	}
 
+	if r, w, name, ok := newGTKBackendFn(); ok {
+		return r, w, name, nil
+	}
+
 	switch {
 	case availableFn("wl-paste"):
 		w := WaylandClipboard{}
@@ -57,7 +61,10 @@ func NewReaderWriter(forceXclip bool) (Reader, Writer, string, error) {
 	}
 }
 
-var availableFn = available
+var (
+	availableFn     = available
+	newGTKBackendFn = newGTKBackend
+)
 
 func available(bin string) bool {
 	_, err := exec.LookPath(bin)
