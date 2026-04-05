@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-04-05
+
+### Changed
+
+- Wayland clipboard monitoring now uses `wl-paste --watch` instead of polling, with automatic fallback to polling if the watcher fails to start
+
 ### Fixed
 
 - Passphrase setup screen now shows the actual config file path instead of a hardcoded default
