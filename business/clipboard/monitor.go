@@ -163,7 +163,7 @@ func (m *Monitor) CopyImage(imageDataBase64 string) error {
 	return nil
 }
 
-// poll runs the clipboard monitoring loop until ctx is cancelled. If watchCh is non-nil, clipboard reads are triggered by watch events instead of a ticker.
+// poll runs the clipboard monitoring loop until ctx is cancelled. If watchCh is non-nil, clipboard reads are triggered by watch events instead of a ticker. Falls back to polling if the watch channel is closed.
 func (m *Monitor) poll(ctx context.Context, watchCh <-chan struct{}) {
 	var tickerCh <-chan time.Time
 	var ticker *time.Ticker
@@ -179,7 +179,15 @@ func (m *Monitor) poll(ctx context.Context, watchCh <-chan struct{}) {
 			return
 		case <-tickerCh:
 			m.readClipboard()
-		case <-watchCh:
+		case _, ok := <-watchCh:
+			if !ok {
+				m.log.Warn("clipboard watcher stopped, falling back to polling")
+				watchCh = nil
+				ticker = time.NewTicker(m.pollInterval)
+				tickerCh = ticker.C
+				defer ticker.Stop()
+				continue
+			}
 			m.readClipboard()
 		}
 	}

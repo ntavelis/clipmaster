@@ -104,6 +104,7 @@ func (w WaylandClipboard) Watch(ctx context.Context, notify chan<- struct{}) err
 			}
 		}
 		_ = cmd.Wait()
+		close(notify)
 	}()
 
 	return nil
