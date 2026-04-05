@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-04-05
+
 ### Changed
 
 - Updated Go dependencies to latest minor/patch versions
+- App version is now embedded in the binary as `vX.Y.Z+shortHash` (or `+shortHash.dirty` for unclean builds)
 
 ## [0.0.3] - 2026-04-05
 
