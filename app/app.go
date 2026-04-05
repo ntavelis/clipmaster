@@ -216,7 +216,7 @@ func (a *App) startNetworking() {
 		MaxHistory:      a.cfg.RemoteClipboardsMaxHistory,
 		PassphraseStore: a.passphraseStore,
 	})
-	if err := a.syncServer.Start(a.ctx); err != nil {
+	if err := a.syncServer.Start(); err != nil {
 		a.log.Warn("sync server failed to start", "error", err)
 		return
 	}
@@ -228,7 +228,13 @@ func (a *App) startNetworking() {
 	}
 	a.discoverer.Start(a.ctx)
 
-	a.peerFetcher = peersclipsync.New(a.log, a.discoverer, a.cfg.RemoteClipboardsPollInterval, a.passphraseStore, caPool)
+	a.peerFetcher = peersclipsync.New(
+		a.log,
+		a.discoverer,
+		a.cfg.RemoteClipboardsPollInterval,
+		a.passphraseStore,
+		caPool,
+	)
 	a.peerFetcher.OnUpdate = func() {
 		runtime.EventsEmit(a.ctx, "remote:updated")
 	}

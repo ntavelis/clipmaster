@@ -33,7 +33,7 @@ func (s *Server) Handle(pattern string, handler http.HandlerFunc) {
 
 // Start binds to an OS-assigned port and begins serving in a goroutine.
 // Port() is valid after Start returns without error.
-func (s *Server) Start(_ context.Context) error {
+func (s *Server) Start() error {
 	ln, err := net.Listen("tcp", "0.0.0.0:0")
 	if err != nil {
 		return fmt.Errorf("sync server: listen: %w", err)
