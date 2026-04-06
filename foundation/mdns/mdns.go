@@ -1,5 +1,5 @@
 // Package mdns wraps github.com/hashicorp/mdns to advertise and discover
-// Clipmaster instances on the local network.
+// Omaclip instances on the local network.
 package mdns
 
 import (
@@ -25,7 +25,7 @@ const (
 
 var ErrNoDiscoverableIPs = fmt.Errorf("mdns: no discoverable IPs, skipping registering to the network")
 
-// Peer describes a discovered remote Clipmaster instance.
+// Peer describes a discovered remote Omaclip instance.
 type Peer struct {
 	Name string `json:"name"`
 	Addr string `json:"addr"`
@@ -60,7 +60,7 @@ func New(log *slog.Logger, browsePeriod time.Duration, hostname string, ps *pass
 	}
 }
 
-// Register advertises this Clipmaster instance at the given port via mDNS.
+// Register advertises this Omaclip instance at the given port via mDNS.
 func (d *Discoverer) Register(port int) error {
 	instanceName := fmt.Sprintf("%s-%d", d.hostname, port)
 	d.myName = instanceName

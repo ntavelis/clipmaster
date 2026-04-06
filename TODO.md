@@ -1,4 +1,4 @@
-# Clipmaster — TODO
+# Omaclip — TODO
 
 ## 1. Cross-Platform Testing
 

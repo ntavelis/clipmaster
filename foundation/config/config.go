@@ -1,4 +1,4 @@
-// Package config handles loading and saving the Clipmaster config file.
+// Package config handles loading and saving the Omaclip config file.
 package config
 
 import (

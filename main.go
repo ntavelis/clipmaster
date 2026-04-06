@@ -58,7 +58,7 @@ func run() error {
 	}
 	cfg.Build = vcs.Version(appVersion)
 
-	help, err := conf.Parse("CLIPMASTER", &cfg)
+	help, err := conf.Parse("OMACLIP", &cfg)
 	if errors.Is(err, conf.ErrHelpWanted) || errors.Is(err, conf.ErrVersionWanted) {
 		fmt.Println(help)
 		return nil

@@ -127,7 +127,7 @@ install_desktop_linux() {
   mkdir -p "${DESKTOP_DIR}"
   cat > "${DESKTOP_DIR}/omaclip.desktop" <<EOF
 [Desktop Entry]
-Name=Clipmaster
+Name=Omaclip
 Comment=Clipboard manager with multi-machine sync
 Exec=${INSTALL_DIR}/${BINARY}
 Icon=${ICON_DIR}/omaclip.png
@@ -142,4 +142,4 @@ if [ "${OS}" = "linux" ]; then
   install_desktop_linux
 fi
 
-echo "Clipmaster installed successfully. Run 'omaclip' to start."
+echo "Omaclip installed successfully. Run 'omaclip' to start."

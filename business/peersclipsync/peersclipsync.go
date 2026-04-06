@@ -160,7 +160,7 @@ func (f *Fetcher) fetchPeer(p fmdns.Peer) ([]clipboard.ClipboardEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Clipmaster-Pass", f.passphraseStore.Hash())
+	req.Header.Set("X-Omaclip-Pass", f.passphraseStore.Hash())
 
 	resp, err := f.client.Do(req)
 	if err != nil {
@@ -193,7 +193,7 @@ func (f *Fetcher) fetchPeerImage(baseURL, id string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Clipmaster-Pass", f.passphraseStore.Hash())
+	req.Header.Set("X-Omaclip-Pass", f.passphraseStore.Hash())
 
 	resp, err := f.client.Do(req)
 	if err != nil {

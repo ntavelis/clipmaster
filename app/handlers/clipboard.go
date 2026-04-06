@@ -18,10 +18,10 @@ type ClipboardHandler struct {
 	PassphraseStore *passphrase.Store
 }
 
-// RequirePassphrase returns middleware that validates the X-Clipmaster-Pass header.
+// RequirePassphrase returns middleware that validates the X-Omaclip-Pass header.
 func RequirePassphrase(store *passphrase.Store, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if subtle.ConstantTimeCompare([]byte(r.Header.Get("X-Clipmaster-Pass")), []byte(store.Hash())) != 1 {
+		if subtle.ConstantTimeCompare([]byte(r.Header.Get("X-Omaclip-Pass")), []byte(store.Hash())) != 1 {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}

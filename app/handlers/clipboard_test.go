@@ -32,7 +32,7 @@ func TestRequirePassphrase_Unauthorized(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/clipboard", nil)
 			if tt.headerVal != "" {
-				req.Header.Set("X-Clipmaster-Pass", tt.headerVal)
+				req.Header.Set("X-Omaclip-Pass", tt.headerVal)
 			}
 			rec := httptest.NewRecorder()
 			handler(rec, req)

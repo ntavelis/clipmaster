@@ -1,5 +1,5 @@
 // Package sync provides the HTTP server that exposes clipboard history
-// to other Clipmaster instances on the local network.
+// to other Omaclip instances on the local network.
 package sync
 
 import (

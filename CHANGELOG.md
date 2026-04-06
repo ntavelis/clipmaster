@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Project renamed from Clipmaster to Omaclip
+- Project renamed from Omaclip to Omaclip
 
 ## [0.0.5] - 2026-04-05
 
