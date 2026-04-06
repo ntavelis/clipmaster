@@ -23,7 +23,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-const appVersion = "0.0.5"
+const appVersion = "0.0.6"
 
 type appConfig struct {
 	ThemeColorPath string `conf:"help:fullpath to the Omarchy theme colors.toml file (default: $HOME/.config/omarchy/current/theme/colors.toml)"`
