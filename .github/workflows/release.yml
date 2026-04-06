@@ -41,7 +41,7 @@ jobs:
         run: |
           REVISION=$(git rev-parse --short HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -tags webkit2_41 -platform linux/amd64 -ldflags "-X omaclip/foundation/vcs.Revision=${REVISION} -X omaclip/foundation/vcs.Modified=${MODIFIED}"
+          wails build -tags webkit2_41 -platform linux/amd64 -ldflags "-X github.com/rhemvi/omaclip/foundation/vcs.Revision=${REVISION} -X github.com/rhemvi/omaclip/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -81,7 +81,7 @@ jobs:
         run: |
           REVISION=$(git rev-parse --short HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -tags webkit2_41 -platform linux/arm64 -ldflags "-X omaclip/foundation/vcs.Revision=${REVISION} -X omaclip/foundation/vcs.Modified=${MODIFIED}"
+          wails build -tags webkit2_41 -platform linux/arm64 -ldflags "-X github.com/rhemvi/omaclip/foundation/vcs.Revision=${REVISION} -X github.com/rhemvi/omaclip/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -113,7 +113,7 @@ jobs:
         run: |
           REVISION=$(git rev-parse --short HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -platform darwin/amd64 -ldflags "-X omaclip/foundation/vcs.Revision=${REVISION} -X omaclip/foundation/vcs.Modified=${MODIFIED}"
+          wails build -platform darwin/amd64 -ldflags "-X github.com/rhemvi/omaclip/foundation/vcs.Revision=${REVISION} -X github.com/rhemvi/omaclip/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Zip .app bundle
         run: cd build/bin && zip -r omaclip-darwin-amd64.zip omaclip.app
@@ -154,7 +154,7 @@ jobs:
         run: |
           REVISION=$(git rev-parse --short HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -platform darwin/arm64 -ldflags "-X omaclip/foundation/vcs.Revision=${REVISION} -X omaclip/foundation/vcs.Modified=${MODIFIED}"
+          wails build -platform darwin/arm64 -ldflags "-X github.com/rhemvi/omaclip/foundation/vcs.Revision=${REVISION} -X github.com/rhemvi/omaclip/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Zip .app bundle
         run: cd build/bin && zip -r omaclip-darwin-arm64.zip omaclip.app
