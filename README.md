@@ -1,4 +1,4 @@
-# Clipmaster
+# Omaclip
 
 A desktop clipboard manager for Omarchy, works in Linux and macOS. It tracks your
 clipboard's history, lets you browse and copy items and is designed for a
@@ -30,7 +30,7 @@ The install script detects your OS, architecture, and package manager,
 installs the required dependencies, and places the binary in `/usr/local/bin`.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ntavelis/clipmaster/master/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ntavelis/omaclip/master/install.sh | sh
 ```
 
 ### Option 2 — Manual installation
@@ -44,36 +44,36 @@ the binary.
 
 ```bash
 sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0 xclip
-curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-linux-amd64 -o clipmaster
-sudo install -m 755 clipmaster /usr/local/bin/clipmaster
+curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
+sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
 ##### Arch Linux
 
 ```bash
 sudo pacman -S --needed gtk3 webkit2gtk-4.1 wl-clipboard
-curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-linux-amd64 -o clipmaster
-sudo install -m 755 clipmaster /usr/local/bin/clipmaster
+curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
+sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
 ##### Fedora / RHEL
 
 ```bash
 sudo dnf install gtk3 webkit2gtk4.1 wl-clipboard
-curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-linux-amd64 -o clipmaster
-sudo install -m 755 clipmaster /usr/local/bin/clipmaster
+curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
+sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
 ##### openSUSE
 
 ```bash
 sudo zypper install libgtk-3-0 libwebkit2gtk-4_1-0 xclip
-curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-linux-amd64 -o clipmaster
-sudo install -m 755 clipmaster /usr/local/bin/clipmaster
+curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
+sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
-> For ARM64 machines replace `clipmaster-linux-amd64` with
-> `clipmaster-linux-arm64`.
+> For ARM64 machines replace `omaclip-linux-amd64` with
+> `omaclip-linux-arm64`.
 
 #### macOS
 
@@ -81,12 +81,12 @@ No extra dependencies needed, macOS already ships with WebKit.
 
 ```bash
 # Intel
-curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-darwin-amd64 -o clipmaster
-sudo install -m 755 clipmaster /usr/local/bin/clipmaster
+curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-darwin-amd64 -o omaclip
+sudo install -m 755 omaclip /usr/local/bin/omaclip
 
 # Apple Silicon (M1/M2/M3)
-curl -fsSL https://github.com/ntavelis/clipmaster/releases/latest/download/clipmaster-darwin-arm64 -o clipmaster
-sudo install -m 755 clipmaster /usr/local/bin/clipmaster
+curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-darwin-arm64 -o omaclip
+sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
 ## Live Development
@@ -117,7 +117,7 @@ focused window, so `wl-paste` must briefly acquire focus on each poll cycle.
 
 Compositors built on wlroots (Hyprland, Sway, etc.) are not affected because
 they support the `wlr-data-control` protocol, which allows background clipboard
-access without focus changes. On these compositors, clipmaster uses event-driven
+access without focus changes. On these compositors, omaclip uses event-driven
 watching with `wl-paste --watch` and no polling is needed.
 
 X11 sessions and macOS are also unaffected.

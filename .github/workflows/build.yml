@@ -71,10 +71,10 @@ jobs:
         run: |
           REVISION=$(git rev-parse --short HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -tags webkit2_41 -platform linux/amd64 -ldflags "-X clipmaster/foundation/vcs.Revision=${REVISION} -X clipmaster/foundation/vcs.Modified=${MODIFIED}"
+          wails build -tags webkit2_41 -platform linux/amd64 -ldflags "-X omaclip/foundation/vcs.Revision=${REVISION} -X omaclip/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: clipmaster-linux-amd64
-          path: build/bin/clipmaster
+          name: omaclip-linux-amd64
+          path: build/bin/omaclip

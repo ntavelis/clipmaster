@@ -21,7 +21,7 @@ tasks:
         sh: git diff --quiet && echo false || echo true
     cmds:
       - go mod tidy
-      - wails build -tags webkit2_41 -ldflags "-X clipmaster/foundation/vcs.Revision={{.REVISION}} -X clipmaster/foundation/vcs.Modified={{.MODIFIED}}"
+      - wails build -tags webkit2_41 -ldflags "-X github.com/rhemvi/omaclip/foundation/vcs.Revision={{.REVISION}} -X github.com/rhemvi/omaclip/foundation/vcs.Modified={{.MODIFIED}}"
 
   app:dev:
     desc: Start the application in development mode

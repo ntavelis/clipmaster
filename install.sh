@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="ntavelis/clipmaster"
-BINARY="clipmaster"
+REPO="ntavelis/omaclip"
+BINARY="omaclip"
 INSTALL_DIR="/usr/local/bin"
 DESKTOP_DIR="${HOME}/.local/share/applications"
 ICON_DIR="${HOME}/.local/share/icons"
@@ -119,27 +119,27 @@ install_desktop_linux() {
   mkdir -p "${ICON_DIR}"
   echo "Downloading icon..."
   if command -v curl &>/dev/null; then
-    curl -fsSL "${ICON_URL}" -o "${ICON_DIR}/clipmaster.png"
+    curl -fsSL "${ICON_URL}" -o "${ICON_DIR}/omaclip.png"
   elif command -v wget &>/dev/null; then
-    wget -qO "${ICON_DIR}/clipmaster.png" "${ICON_URL}"
+    wget -qO "${ICON_DIR}/omaclip.png" "${ICON_URL}"
   fi
 
   mkdir -p "${DESKTOP_DIR}"
-  cat > "${DESKTOP_DIR}/clipmaster.desktop" <<EOF
+  cat > "${DESKTOP_DIR}/omaclip.desktop" <<EOF
 [Desktop Entry]
 Name=Clipmaster
 Comment=Clipboard manager with multi-machine sync
 Exec=${INSTALL_DIR}/${BINARY}
-Icon=${ICON_DIR}/clipmaster.png
+Icon=${ICON_DIR}/omaclip.png
 Type=Application
 Categories=Utility;
 Terminal=false
 EOF
-  echo "Desktop entry created at ${DESKTOP_DIR}/clipmaster.desktop"
+  echo "Desktop entry created at ${DESKTOP_DIR}/omaclip.desktop"
 }
 
 if [ "${OS}" = "linux" ]; then
   install_desktop_linux
 fi
 
-echo "Clipmaster installed successfully. Run 'clipmaster' to start."
+echo "Clipmaster installed successfully. Run 'omaclip' to start."

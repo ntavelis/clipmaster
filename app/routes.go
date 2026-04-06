@@ -1,8 +1,8 @@
 package app
 
 import (
-	"clipmaster/app/handlers"
-	bsync "clipmaster/business/sync"
+	"github.com/rhemvi/omaclip/app/handlers"
+	bsync "github.com/rhemvi/omaclip/business/sync"
 )
 
 func registerRoutes(s *bsync.Server, h *handlers.ClipboardHandler) {

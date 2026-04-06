@@ -9,8 +9,8 @@ import (
 
 // Revision and Modified can be set at build time via ldflags:
 //
-//	-X clipmaster/foundation/vcs.Revision=$(git rev-parse --short HEAD)
-//	-X clipmaster/foundation/vcs.Modified=$(git diff --quiet && echo false || echo true)
+//	-X github.com/rhemvi/omaclip/foundation/vcs.Revision=$(git rev-parse --short HEAD)
+//	-X github.com/rhemvi/omaclip/foundation/vcs.Modified=$(git diff --quiet && echo false || echo true)
 var Revision string
 var Modified string
 

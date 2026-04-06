@@ -41,13 +41,13 @@ jobs:
         run: |
           REVISION=$(git rev-parse --short HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -tags webkit2_41 -platform linux/amd64 -ldflags "-X clipmaster/foundation/vcs.Revision=${REVISION} -X clipmaster/foundation/vcs.Modified=${MODIFIED}"
+          wails build -tags webkit2_41 -platform linux/amd64 -ldflags "-X omaclip/foundation/vcs.Revision=${REVISION} -X omaclip/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: clipmaster-linux-amd64
-          path: build/bin/clipmaster
+          name: omaclip-linux-amd64
+          path: build/bin/omaclip
 
   build-linux-arm64:
     runs-on: ubuntu-24.04-arm
@@ -81,13 +81,13 @@ jobs:
         run: |
           REVISION=$(git rev-parse --short HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -tags webkit2_41 -platform linux/arm64 -ldflags "-X clipmaster/foundation/vcs.Revision=${REVISION} -X clipmaster/foundation/vcs.Modified=${MODIFIED}"
+          wails build -tags webkit2_41 -platform linux/arm64 -ldflags "-X omaclip/foundation/vcs.Revision=${REVISION} -X omaclip/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: clipmaster-linux-arm64
-          path: build/bin/clipmaster
+          name: omaclip-linux-arm64
+          path: build/bin/omaclip
 
   build-darwin-amd64:
     runs-on: macos-latest
@@ -113,22 +113,22 @@ jobs:
         run: |
           REVISION=$(git rev-parse --short HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -platform darwin/amd64 -ldflags "-X clipmaster/foundation/vcs.Revision=${REVISION} -X clipmaster/foundation/vcs.Modified=${MODIFIED}"
+          wails build -platform darwin/amd64 -ldflags "-X omaclip/foundation/vcs.Revision=${REVISION} -X omaclip/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Zip .app bundle
-        run: cd build/bin && zip -r clipmaster-darwin-amd64.zip clipmaster.app
+        run: cd build/bin && zip -r omaclip-darwin-amd64.zip omaclip.app
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v7
         with:
-          name: clipmaster-darwin-amd64-bin
-          path: build/bin/clipmaster.app/Contents/MacOS/clipmaster
+          name: omaclip-darwin-amd64-bin
+          path: build/bin/omaclip.app/Contents/MacOS/omaclip
 
       - name: Upload .app artifact
         uses: actions/upload-artifact@v7
         with:
-          name: clipmaster-darwin-amd64-app
-          path: build/bin/clipmaster-darwin-amd64.zip
+          name: omaclip-darwin-amd64-app
+          path: build/bin/omaclip-darwin-amd64.zip
 
   build-darwin-arm64:
     runs-on: macos-14
@@ -154,22 +154,22 @@ jobs:
         run: |
           REVISION=$(git rev-parse --short HEAD)
           MODIFIED=$(git diff --quiet && echo false || echo true)
-          wails build -platform darwin/arm64 -ldflags "-X clipmaster/foundation/vcs.Revision=${REVISION} -X clipmaster/foundation/vcs.Modified=${MODIFIED}"
+          wails build -platform darwin/arm64 -ldflags "-X omaclip/foundation/vcs.Revision=${REVISION} -X omaclip/foundation/vcs.Modified=${MODIFIED}"
 
       - name: Zip .app bundle
-        run: cd build/bin && zip -r clipmaster-darwin-arm64.zip clipmaster.app
+        run: cd build/bin && zip -r omaclip-darwin-arm64.zip omaclip.app
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v7
         with:
-          name: clipmaster-darwin-arm64-bin
-          path: build/bin/clipmaster.app/Contents/MacOS/clipmaster
+          name: omaclip-darwin-arm64-bin
+          path: build/bin/omaclip.app/Contents/MacOS/omaclip
 
       - name: Upload .app artifact
         uses: actions/upload-artifact@v7
         with:
-          name: clipmaster-darwin-arm64-app
-          path: build/bin/clipmaster-darwin-arm64.zip
+          name: omaclip-darwin-arm64-app
+          path: build/bin/omaclip-darwin-arm64.zip
 
   release:
     needs:
@@ -191,23 +191,23 @@ jobs:
       - name: Flatten artifacts
         run: |
           mkdir -p dist/out
-          cp dist/clipmaster-linux-amd64/clipmaster       dist/out/clipmaster-linux-amd64
-          cp dist/clipmaster-linux-arm64/clipmaster       dist/out/clipmaster-linux-arm64
-          cp dist/clipmaster-darwin-amd64-bin/clipmaster  dist/out/clipmaster-darwin-amd64
-          cp dist/clipmaster-darwin-arm64-bin/clipmaster  dist/out/clipmaster-darwin-arm64
-          cp dist/clipmaster-darwin-amd64-app/clipmaster-darwin-amd64.zip dist/out/clipmaster-darwin-amd64.zip
-          cp dist/clipmaster-darwin-arm64-app/clipmaster-darwin-arm64.zip dist/out/clipmaster-darwin-arm64.zip
-          chmod +x dist/out/clipmaster-linux-amd64 dist/out/clipmaster-linux-arm64 \
-                    dist/out/clipmaster-darwin-amd64 dist/out/clipmaster-darwin-arm64
+          cp dist/omaclip-linux-amd64/omaclip       dist/out/omaclip-linux-amd64
+          cp dist/omaclip-linux-arm64/omaclip       dist/out/omaclip-linux-arm64
+          cp dist/omaclip-darwin-amd64-bin/omaclip  dist/out/omaclip-darwin-amd64
+          cp dist/omaclip-darwin-arm64-bin/omaclip  dist/out/omaclip-darwin-arm64
+          cp dist/omaclip-darwin-amd64-app/omaclip-darwin-amd64.zip dist/out/omaclip-darwin-amd64.zip
+          cp dist/omaclip-darwin-arm64-app/omaclip-darwin-arm64.zip dist/out/omaclip-darwin-arm64.zip
+          chmod +x dist/out/omaclip-linux-amd64 dist/out/omaclip-linux-arm64 \
+                    dist/out/omaclip-darwin-amd64 dist/out/omaclip-darwin-arm64
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/out/clipmaster-linux-amd64
-            dist/out/clipmaster-linux-arm64
-            dist/out/clipmaster-darwin-amd64
-            dist/out/clipmaster-darwin-arm64
-            dist/out/clipmaster-darwin-amd64.zip
-            dist/out/clipmaster-darwin-arm64.zip
+            dist/out/omaclip-linux-amd64
+            dist/out/omaclip-linux-arm64
+            dist/out/omaclip-darwin-amd64
+            dist/out/omaclip-darwin-arm64
+            dist/out/omaclip-darwin-amd64.zip
+            dist/out/omaclip-darwin-arm64.zip
             build/appicon.png

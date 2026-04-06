@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"testing"
 
-	"clipmaster/business/clipboard"
-	"clipmaster/business/passphrase"
-	fmdns "clipmaster/foundation/mdns"
+	"github.com/rhemvi/omaclip/business/clipboard"
+	"github.com/rhemvi/omaclip/business/passphrase"
+	fmdns "github.com/rhemvi/omaclip/foundation/mdns"
 )
 
 type mockDiscoverer struct {

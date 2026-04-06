@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"clipmaster/business/passphrase"
+	"github.com/rhemvi/omaclip/business/passphrase"
 )
 
 var discardLog = slog.New(slog.NewTextHandler(io.Discard, nil))

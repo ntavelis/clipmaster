@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"clipmaster/business/clipboard"
-	"clipmaster/business/passphrase"
-	fmdns "clipmaster/foundation/mdns"
+	"github.com/rhemvi/omaclip/business/clipboard"
+	"github.com/rhemvi/omaclip/business/passphrase"
+	fmdns "github.com/rhemvi/omaclip/foundation/mdns"
 )
 
 // PeerClipboard holds a remote peer's name and its clipboard entries.

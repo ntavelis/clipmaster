@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"clipmaster/business/passphrase"
+	"github.com/rhemvi/omaclip/business/passphrase"
 )
 
 func TestRequirePassphrase_Unauthorized(t *testing.T) {

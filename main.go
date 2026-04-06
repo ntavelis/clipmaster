@@ -1,4 +1,4 @@
-// Package main is the entry point for the clipmaster desktop application.
+// Package main is the entry point for the omaclip desktop application.
 package main
 
 import (
@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"clipmaster/app"
-	"clipmaster/foundation/logger"
-	"clipmaster/foundation/vcs"
+	"github.com/rhemvi/omaclip/app"
+	"github.com/rhemvi/omaclip/foundation/logger"
+	"github.com/rhemvi/omaclip/foundation/vcs"
 
 	"github.com/ardanlabs/conf/v3"
 	"github.com/wailsapp/wails/v2"
@@ -27,7 +27,7 @@ const appVersion = "0.0.5"
 
 type appConfig struct {
 	ThemeColorPath string `conf:"help:fullpath to the Omarchy theme colors.toml file (default: $HOME/.config/omarchy/current/theme/colors.toml)"`
-	ConfigPath     string `conf:"help:path to the clipmaster config file (default: $HOME/.config/clipmaster/config.json)"`
+	ConfigPath     string `conf:"help:path to the omaclip config file (default: $HOME/.config/omaclip/config.json)"`
 	Debug          bool   `conf:"default:false,help:enable debug log level"`
 	Clipboard      struct {
 		MaxHistory   int           `conf:"default:50,help:maximum number of clipboard entries to keep in history"`
@@ -54,7 +54,7 @@ func main() {
 func run() error {
 	cfg := appConfig{
 		ThemeColorPath: filepath.Join(os.Getenv("HOME"), ".config/omarchy/current/theme/colors.toml"),
-		ConfigPath:     filepath.Join(os.Getenv("HOME"), ".config/clipmaster/config.json"),
+		ConfigPath:     filepath.Join(os.Getenv("HOME"), ".config/omaclip/config.json"),
 	}
 	cfg.Build = vcs.Version(appVersion)
 
@@ -91,7 +91,7 @@ func run() error {
 	})
 
 	if err := wails.Run(&options.App{
-		Title:  "clipmaster",
+		Title:  "omaclip",
 		Width:  1024,
 		Height: 768,
 		AssetServer: &assetserver.Options{

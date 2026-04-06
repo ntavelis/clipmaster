@@ -13,13 +13,13 @@ import (
 	"sync"
 	"time"
 
-	"clipmaster/business/passphrase"
+	"github.com/rhemvi/omaclip/business/passphrase"
 
 	"github.com/hashicorp/mdns"
 )
 
 const (
-	serviceType = "_clipmaster._tcp"
+	serviceType = "_omaclip._tcp"
 	domain      = "local."
 )
 

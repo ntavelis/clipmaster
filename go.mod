@@ -1,4 +1,4 @@
-module clipmaster
+module github.com/rhemvi/omaclip
 
 go 1.26.0
 

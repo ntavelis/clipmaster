@@ -44,7 +44,7 @@ func (d DarwinOsascriptClipboard) GetImage() ([]byte, error) {
 		return nil, nil
 	}
 
-	f, err := os.CreateTemp("", "clipmaster-read-*.png")
+	f, err := os.CreateTemp("", "omaclip-read-*.png")
 	if err != nil {
 		return nil, fmt.Errorf("creating temp file: %w", err)
 	}
@@ -81,7 +81,7 @@ func (d DarwinOsascriptClipboard) SetText(text string) error {
 
 // SetImage writes PNG image data to the clipboard using osascript via a temporary file.
 func (d DarwinOsascriptClipboard) SetImage(pngData []byte) error {
-	f, err := os.CreateTemp("", "clipmaster-write-*.png")
+	f, err := os.CreateTemp("", "omaclip-write-*.png")
 	if err != nil {
 		return fmt.Errorf("creating temp file: %w", err)
 	}

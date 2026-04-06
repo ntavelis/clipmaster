@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"clipmaster/business/clipboard"
-	"clipmaster/business/passphrase"
+	"github.com/rhemvi/omaclip/business/clipboard"
+	"github.com/rhemvi/omaclip/business/passphrase"
 )
 
 // ClipboardHandler holds dependencies for all HTTP handlers.

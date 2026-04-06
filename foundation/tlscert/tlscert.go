@@ -1,4 +1,4 @@
-// Package tlscert generates in-memory TLS certificates for clipmaster peers.
+// Package tlscert generates in-memory TLS certificates for omaclip peers.
 package tlscert
 
 import (
@@ -66,14 +66,14 @@ func deterministicP256Key(reader io.Reader) (*ecdsa.PrivateKey, error) {
 // All peers that share the same passphrase will derive the same CA and can
 // therefore verify each other's leaf certificates without InsecureSkipVerify.
 func GenerateCA(seed []byte) (tls.Certificate, *x509.Certificate, error) {
-	caKey, err := deterministicP256Key(hkdf.New(sha256.New, seed, []byte("clipmaster-ca-v1"), nil))
+	caKey, err := deterministicP256Key(hkdf.New(sha256.New, seed, []byte("omaclip-ca-v1"), nil))
 	if err != nil {
 		return tls.Certificate{}, nil, err
 	}
 
 	template := &x509.Certificate{
 		SerialNumber:          big.NewInt(1),
-		Subject:               pkix.Name{CommonName: "clipmaster-ca"},
+		Subject:               pkix.Name{CommonName: "omaclip-ca"},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().Add(10 * 365 * 24 * time.Hour),
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
@@ -117,7 +117,7 @@ func GenerateLeaf(caCert *x509.Certificate, caKey crypto.PrivateKey) (tls.Certif
 
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(2),
-		Subject:      pkix.Name{CommonName: "clipmaster"},
+		Subject:      pkix.Name{CommonName: "omaclip"},
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().Add(365 * 24 * time.Hour),
 		KeyUsage:     x509.KeyUsageDigitalSignature,
