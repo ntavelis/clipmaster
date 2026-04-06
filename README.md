@@ -30,7 +30,7 @@ The install script detects your OS, architecture, and package manager,
 installs the required dependencies, and places the binary in `/usr/local/bin`.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ntavelis/omaclip/master/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/rhemvi/omaclip/master/install.sh | sh
 ```
 
 ### Option 2 — Manual installation
@@ -44,7 +44,7 @@ the binary.
 
 ```bash
 sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0 xclip
-curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
+curl -fsSL https://github.com/rhemvi/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
 sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
@@ -52,7 +52,7 @@ sudo install -m 755 omaclip /usr/local/bin/omaclip
 
 ```bash
 sudo pacman -S --needed gtk3 webkit2gtk-4.1 wl-clipboard
-curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
+curl -fsSL https://github.com/rhemvi/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
 sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
@@ -60,7 +60,7 @@ sudo install -m 755 omaclip /usr/local/bin/omaclip
 
 ```bash
 sudo dnf install gtk3 webkit2gtk4.1 wl-clipboard
-curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
+curl -fsSL https://github.com/rhemvi/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
 sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
@@ -68,7 +68,7 @@ sudo install -m 755 omaclip /usr/local/bin/omaclip
 
 ```bash
 sudo zypper install libgtk-3-0 libwebkit2gtk-4_1-0 xclip
-curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
+curl -fsSL https://github.com/rhemvi/omaclip/releases/latest/download/omaclip-linux-amd64 -o omaclip
 sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
@@ -81,11 +81,11 @@ No extra dependencies needed, macOS already ships with WebKit.
 
 ```bash
 # Intel
-curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-darwin-amd64 -o omaclip
+curl -fsSL https://github.com/rhemvi/omaclip/releases/latest/download/omaclip-darwin-amd64 -o omaclip
 sudo install -m 755 omaclip /usr/local/bin/omaclip
 
 # Apple Silicon (M1/M2/M3)
-curl -fsSL https://github.com/ntavelis/omaclip/releases/latest/download/omaclip-darwin-arm64 -o omaclip
+curl -fsSL https://github.com/rhemvi/omaclip/releases/latest/download/omaclip-darwin-arm64 -o omaclip
 sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 

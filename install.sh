@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="ntavelis/omaclip"
+REPO="rhemvi/omaclip"
 BINARY="omaclip"
 INSTALL_DIR="/usr/local/bin"
 DESKTOP_DIR="${HOME}/.local/share/applications"
