@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-04-07
+
+### Added
+
+- AUR package `omaclip-bin` for easy installation on Arch Linux
+
+### Fixed
+
+- webkit2gtk package names corrected in install instructions for Arch Linux and Alpine
+
 ## [0.1.1] - 2026-04-06
 
 ### Fixed
