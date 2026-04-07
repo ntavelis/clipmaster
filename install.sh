@@ -128,7 +128,7 @@ install_desktop_linux() {
   cat > "${DESKTOP_DIR}/omaclip.desktop" <<EOF
 [Desktop Entry]
 Name=Omaclip
-Comment=Clipboard manager with multi-machine sync
+Comment=Desktop clipboard manager with secure mesh sync
 Exec=${INSTALL_DIR}/${BINARY}
 Icon=${ICON_DIR}/omaclip.png
 Type=Application

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Omaclip
+Comment=Desktop clipboard manager with secure mesh sync
+Exec=omaclip
+Icon=omaclip
+Type=Application
+Categories=Utility;
+Terminal=false

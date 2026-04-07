@@ -1,0 +1,7 @@
+src/
+pkg/
+*.pkg.tar.zst
+*.tar.gz
+omaclip-linux-*
+appicon.png
+LICENSE

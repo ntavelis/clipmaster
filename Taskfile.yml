@@ -37,3 +37,18 @@ tasks:
     desc: Run golangci-lint
     cmds:
       - golangci-lint run ./...
+
+  aur:publish:
+    desc: Update and push the AUR omaclip-bin package
+    dir: build/aur
+    vars:
+      VERSION:
+        sh: grep '^pkgver=' PKGBUILD | cut -d= -f2
+      AUR_REPO: /tmp/omaclip-bin-aur
+    cmds:
+      - makepkg --printsrcinfo > .SRCINFO
+      - rm -rf {{.AUR_REPO}}
+      - git clone ssh://aur@aur.archlinux.org/omaclip-bin.git {{.AUR_REPO}}
+      - cp PKGBUILD .SRCINFO omaclip.desktop {{.AUR_REPO}}/
+      - cd {{.AUR_REPO}} && git add -A && git commit -m "Update to {{.VERSION}}" && git push
+      - rm -rf {{.AUR_REPO}}
