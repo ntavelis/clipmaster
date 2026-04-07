@@ -46,6 +46,7 @@ tasks:
         sh: grep '^pkgver=' PKGBUILD | cut -d= -f2
       AUR_REPO: /tmp/omaclip-bin-aur
     cmds:
+      - updpkgsums
       - makepkg --printsrcinfo > .SRCINFO
       - rm -rf {{.AUR_REPO}}
       - git clone ssh://aur@aur.archlinux.org/omaclip-bin.git {{.AUR_REPO}}

@@ -24,7 +24,13 @@ hot-reloading its color scheme the moment your OS theme changes.
 
 ## Installation
 
-### Option 1 — One-liner (recommended)
+### Option 1 — AUR (recommended for Arch / Omarchy)
+
+```bash
+yay -S omaclip-bin
+```
+
+### Option 2 — One-liner
 
 The install script detects your OS, architecture, and package manager,
 installs the required dependencies, and places the binary in `/usr/local/bin`.
@@ -33,7 +39,7 @@ installs the required dependencies, and places the binary in `/usr/local/bin`.
 curl -fsSL https://raw.githubusercontent.com/rhemvi/omaclip/master/install.sh | sh
 ```
 
-### Option 2 — Manual installation
+### Option 3 — Manual installation
 
 #### Linux
 
