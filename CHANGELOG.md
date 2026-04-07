@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-04-07
+
+### Fixed
+
+- AUR PKGBUILD now uses versioned filenames for architecture-specific binaries to prevent stale yay cache across upgrades
+
 ## [0.1.3] - 2026-04-07
 
 ### Fixed
