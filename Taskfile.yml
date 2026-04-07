@@ -38,16 +38,22 @@ tasks:
     cmds:
       - golangci-lint run ./...
 
+  aur:checksums:
+    desc: Regenerate checksums and .SRCINFO for the AUR omaclip-bin package
+    dir: build/aur
+    cmds:
+      - updpkgsums
+      - makepkg --printsrcinfo > .SRCINFO
+
   aur:publish:
     desc: Update and push the AUR omaclip-bin package
     dir: build/aur
+    deps: [aur:checksums]
     vars:
       VERSION:
         sh: grep '^pkgver=' PKGBUILD | cut -d= -f2
       AUR_REPO: /tmp/omaclip-bin-aur
     cmds:
-      - updpkgsums
-      - makepkg --printsrcinfo > .SRCINFO
       - rm -rf {{.AUR_REPO}}
       - git clone ssh://aur@aur.archlinux.org/omaclip-bin.git {{.AUR_REPO}}
       - cp PKGBUILD .SRCINFO omaclip.desktop {{.AUR_REPO}}/
