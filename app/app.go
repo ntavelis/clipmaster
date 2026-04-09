@@ -32,6 +32,7 @@ type Config struct {
 	RemoteClipboardsPollInterval time.Duration
 	RemoteClipboardsMaxHistory   int
 	PeersPollInterval            time.Duration
+	PeersMDNSInterface           string
 	DisableRemoteClipboards      bool
 }
 
@@ -222,7 +223,12 @@ func (a *App) startNetworking() {
 	}
 
 	host, _ := os.Hostname()
-	a.discoverer = fmdns.New(a.log, a.cfg.PeersPollInterval, host, a.passphraseStore)
+	discoverer, err := fmdns.New(a.log, a.cfg.PeersPollInterval, host, a.passphraseStore, a.cfg.PeersMDNSInterface)
+	if err != nil {
+		a.log.Error("mDNS setup failed", "error", err)
+		return
+	}
+	a.discoverer = discoverer
 	if err := a.discoverer.Register(a.syncServer.Port()); err != nil {
 		a.log.Warn("mDNS registration failed", "error", err)
 	}

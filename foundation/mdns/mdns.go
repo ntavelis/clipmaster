@@ -41,6 +41,7 @@ type Discoverer struct {
 	myName          string
 	browsePeriod    time.Duration
 	passphraseStore *passphrase.Store
+	iface           *net.Interface
 
 	mu       sync.RWMutex
 	peers    map[string]Peer
@@ -49,8 +50,9 @@ type Discoverer struct {
 }
 
 // New creates a Discoverer. Call Register then Start to begin advertising and browsing.
-func New(log *slog.Logger, browsePeriod time.Duration, hostname string, ps *passphrase.Store) *Discoverer {
-	return &Discoverer{
+// If ifaceName is non-empty, mDNS will bind to that network interface only.
+func New(log *slog.Logger, browsePeriod time.Duration, hostname string, ps *passphrase.Store, ifaceName string) (*Discoverer, error) {
+	d := &Discoverer{
 		log:             log,
 		browsePeriod:    browsePeriod,
 		peers:           make(map[string]Peer),
@@ -58,6 +60,16 @@ func New(log *slog.Logger, browsePeriod time.Duration, hostname string, ps *pass
 		hostname:        hostname,
 		passphraseStore: ps,
 	}
+
+	if ifaceName != "" {
+		iface, err := net.InterfaceByName(ifaceName)
+		if err != nil {
+			return nil, fmt.Errorf("mdns: looking up interface %q: %w", ifaceName, err)
+		}
+		d.iface = iface
+	}
+
+	return d, nil
 }
 
 // Register advertises this Omaclip instance at the given port via mDNS.
@@ -65,7 +77,12 @@ func (d *Discoverer) Register(port int) error {
 	instanceName := fmt.Sprintf("%s-%d", d.hostname, port)
 	d.myName = instanceName
 
-	ips := lanIPs(d.hostname)
+	var ips []net.IP
+	if d.iface != nil {
+		ips = ifaceIPs(d.iface)
+	} else {
+		ips = lanIPs(d.hostname)
+	}
 	if ips == nil {
 		return ErrNoDiscoverableIPs
 	}
@@ -75,7 +92,12 @@ func (d *Discoverer) Register(port int) error {
 		return fmt.Errorf("mdns: creating service: %w", err)
 	}
 
-	srv, err := mdns.NewServer(&mdns.Config{Zone: svc, Logger: log.New(io.Discard, "", 0)})
+	cfg := &mdns.Config{Zone: svc, Logger: log.New(io.Discard, "", 0)}
+	if d.iface != nil {
+		cfg.Iface = d.iface
+	}
+
+	srv, err := mdns.NewServer(cfg)
 	if err != nil {
 		return fmt.Errorf("mdns: starting server: %w", err)
 	}
@@ -129,6 +151,9 @@ func (d *Discoverer) browse() {
 		params.Entries = entries
 		params.DisableIPv6 = true
 		params.Logger = log.New(io.Discard, "", 0)
+		if d.iface != nil {
+			params.Interface = d.iface
+		}
 		if err := mdns.Query(params); err != nil {
 			d.log.Warn("mdns browse failed", "error", err)
 		}
@@ -188,6 +213,26 @@ func lanIPs(hostname string) []net.IP {
 	}
 
 	return filterIPs(resolved)
+}
+
+// ifaceIPs returns the IPv4 addresses assigned to a specific network interface.
+func ifaceIPs(iface *net.Interface) []net.IP {
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return nil
+	}
+
+	var ips []net.IP
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+		if ip4 := ipNet.IP.To4(); ip4 != nil {
+			ips = append(ips, ip4)
+		}
+	}
+	return ips
 }
 
 func filterIPs(candidates []net.IP) []net.IP {
