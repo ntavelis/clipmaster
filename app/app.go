@@ -96,7 +96,13 @@ func (a *App) Startup(ctx context.Context) {
 	}
 
 	if a.passphraseStore.Get() != "" && !a.cfg.DisableRemoteClipboards {
-		a.startNetworking()
+		if err := a.startNetworking(); err != nil {
+			a.log.Error("failed to start networking", "error", err)
+			if errors.Is(err, fmdns.ErrInterfaceNotFound) {
+				a.log.Error("the requested network interface is not available, please pass a valid network interface or skip the flag to auto discover")
+				os.Exit(1)
+			}
+		}
 	}
 
 	a.monitor.OnNewEntry = func(entry clipboard.ClipboardEntry) {
@@ -177,7 +183,9 @@ func (a *App) SubmitPassphrase(p string) error {
 		return err
 	}
 	a.passphraseStore.Set(p)
-	a.startNetworking()
+	if err := a.startNetworking(); err != nil {
+		a.log.Error("failed to start networking", "error", err)
+	}
 	return nil
 }
 
@@ -196,17 +204,15 @@ func validatePassphraseFromConfig(configPath string, store *passphrase.Store) er
 
 // startNetworking initialises the TLS sync server, mDNS discovery, and peer fetcher.
 // It is called at startup when a passphrase is already configured, or on first SubmitPassphrase.
-func (a *App) startNetworking() {
+func (a *App) startNetworking() error {
 	caTLSCert, caCert, err := tlscert.GenerateCA(a.passphraseStore.KeyBytes())
 	if err != nil {
-		a.log.Error("failed to generate CA cert", "error", err)
-		return
+		return fmt.Errorf("failed to generate CA cert: %w", err)
 	}
 
 	leafCert, err := tlscert.GenerateLeaf(caCert, caTLSCert.PrivateKey)
 	if err != nil {
-		a.log.Error("failed to generate leaf cert", "error", err)
-		return
+		return fmt.Errorf("failed to generate leaf cert %w", err)
 	}
 
 	caPool := x509.NewCertPool()
@@ -219,27 +225,17 @@ func (a *App) startNetworking() {
 		PassphraseStore: a.passphraseStore,
 	})
 	if err := a.syncServer.Start(); err != nil {
-		a.log.Warn("sync server failed to start", "error", err)
-		return
+		return fmt.Errorf("failed to start sync https server: %w", err)
 	}
 
 	host, _ := os.Hostname()
 	discoverer, err := fmdns.New(a.log, a.cfg.PeersPollInterval, host, a.passphraseStore, a.cfg.PeersMDNSInterface)
 	if err != nil {
-		if errors.Is(err, fmdns.ErrInterfaceNotFound) {
-			a.log.Error("mDNS setup failed", "error", err)
-			os.Exit(1)
-		}
-		a.log.Warn("mDNS setup failed", "error", err)
-		return
+		return fmt.Errorf("failed to start mDNS discoverer: %w", err)
 	}
 	a.discoverer = discoverer
 	if err := a.discoverer.Register(a.syncServer.Port()); err != nil {
-		if errors.Is(err, fmdns.ErrServiceRegistration) {
-			a.log.Error("mDNS registration failed", "error", err)
-			os.Exit(1)
-		}
-		a.log.Warn("mDNS registration failed", "error", err)
+		return fmt.Errorf("failed to register mDNS service to network %w", err)
 	}
 	a.discoverer.Start(a.ctx)
 
@@ -254,6 +250,7 @@ func (a *App) startNetworking() {
 		runtime.EventsEmit(a.ctx, "remote:updated")
 	}
 	a.peerFetcher.Start(a.ctx)
+	return nil
 }
 
 func areWeRunningInOmarchy(themeColorPath string) bool {
