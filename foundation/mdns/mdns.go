@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	ErrNoDiscoverableIPs  = fmt.Errorf("mdns: no discoverable IPs, skipping registering to the network")
-	ErrInterfaceNotFound  = fmt.Errorf("mdns: requested network interface not found")
+	ErrNoDiscoverableIPs   = fmt.Errorf("mdns: no discoverable IPs, skipping registering to the network")
+	ErrInterfaceNotFound   = fmt.Errorf("mdns: requested network interface not found")
 	ErrServiceRegistration = fmt.Errorf("mdns: failed to register service")
 )
 
@@ -53,7 +53,13 @@ type Discoverer struct {
 
 // New creates a Discoverer. Call Register then Start to begin advertising and browsing.
 // If ifaceName is non-empty, mDNS will bind to that network interface only.
-func New(log *slog.Logger, browsePeriod time.Duration, hostname string, ps *passphrase.Store, ifaceName string) (*Discoverer, error) {
+func New(
+	log *slog.Logger,
+	browsePeriod time.Duration,
+	hostname string,
+	ps *passphrase.Store,
+	ifaceName string,
+) (*Discoverer, error) {
 	d := &Discoverer{
 		log:             log,
 		browsePeriod:    browsePeriod,
@@ -79,14 +85,9 @@ func (d *Discoverer) Register(port int) error {
 	instanceName := fmt.Sprintf("%s-%d", d.hostname, port)
 	d.myName = instanceName
 
-	var ips []net.IP
-	if d.iface != nil {
-		ips = ifaceIPs(d.iface)
-	} else {
-		ips = lanIPs(d.hostname)
-	}
-	if ips == nil {
-		return ErrNoDiscoverableIPs
+	ips, err := getIPs(d)
+	if err != nil {
+		return err
 	}
 
 	txt := []string{"version=1", "ph=" + d.passphraseStore.ShortHash()}
@@ -101,7 +102,16 @@ func (d *Discoverer) Register(port int) error {
 		ifaces = []net.Interface{*d.iface}
 	}
 
-	srv, err := zeroconf.RegisterProxy(instanceName, serviceType, domain, port, instanceName, ipStrs, txt, ifaces)
+	srv, err := zeroconf.RegisterProxy(
+		instanceName,
+		serviceType,
+		domain,
+		port,
+		instanceName,
+		ipStrs,
+		txt,
+		ifaces,
+	)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrServiceRegistration, err)
 	}
@@ -184,16 +194,13 @@ func (d *Discoverer) browse(ctx context.Context) {
 			continue
 		}
 
-		addr := ""
-		if len(entry.AddrIPv4) > 0 {
-			addr = entry.AddrIPv4[0].String()
-		} else if len(entry.AddrIPv6) > 0 {
-			addr = entry.AddrIPv6[0].String()
+		if len(entry.AddrIPv4) == 0 {
+			continue
 		}
 
 		seen[name] = Peer{
 			Name: name,
-			Addr: addr,
+			Addr: entry.AddrIPv4[0].String(),
 			Port: entry.Port,
 		}
 	}
@@ -226,6 +233,19 @@ func lanIPs(hostname string) []net.IP {
 	}
 
 	return filterIPs(resolved)
+}
+
+func getIPs(d *Discoverer) ([]net.IP, error) {
+	var ips []net.IP
+	if d.iface != nil {
+		ips = ifaceIPs(d.iface)
+	} else {
+		ips = lanIPs(d.hostname)
+	}
+	if ips == nil {
+		return nil, ErrNoDiscoverableIPs
+	}
+	return ips, nil
 }
 
 // ifaceIPs returns the IPv4 addresses assigned to a specific network interface.
@@ -264,8 +284,8 @@ func filterIPs(candidates []net.IP) []net.IP {
 func (d *Discoverer) peerMatchesPassphrase(infoFields []string) bool {
 	hash := d.passphraseStore.ShortHash()
 	for _, field := range infoFields {
-		if strings.HasPrefix(field, "ph=") {
-			return strings.TrimPrefix(field, "ph=") == hash
+		if after, ok := strings.CutPrefix(field, "ph="); ok {
+			return after == hash
 		}
 	}
 	return false

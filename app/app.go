@@ -91,7 +91,7 @@ func (a *App) Startup(ctx context.Context) {
 	}
 
 	if err := validatePassphraseFromConfig(a.cfg.ConfigPath, a.passphraseStore); err != nil {
-		a.log.Error(err.Error())
+		a.log.Error(fmt.Sprintf("invalid passphrase in config file — fix or delete %s and restart: %s", a.cfg.ConfigPath, err))
 		os.Exit(1)
 	}
 
@@ -196,7 +196,7 @@ func validatePassphraseFromConfig(configPath string, store *passphrase.Store) er
 		return nil
 	}
 	if err := passphrase.Validate(cfg.Passphrase); err != nil {
-		return fmt.Errorf("invalid passphrase in config file — fix or delete %s and restart: %w", configPath, err)
+		return err
 	}
 	store.Set(cfg.Passphrase)
 	return nil
