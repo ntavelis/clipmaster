@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Images are now stored in their original format (JPEG, PNG, etc.) instead of being normalised to PNG on ingestion, significantly reducing memory usage and eliminating the ~7s conversion delay for large images
+- On copy-out, non-PNG images are converted to PNG for clipboard compatibility using fast compression (`png.BestSpeed`); PNG images are returned as-is with no conversion
+- Replaced single `OMACLIP_CLIPBOARD_MAX_IMAGE_MB` with two separate limits:
+  - `OMACLIP_CLIPBOARD_MAX_PNG_IMAGE_MB` (default 5) for PNG images from the compositor (screenshots, browser copies)
+  - `OMACLIP_CLIPBOARD_MAX_NON_PNG_IMAGE_MB` (default 2) for compressed formats like JPEG from file managers or macOS clipboard
+
+### Fixed
+
+- Sync endpoint now serves the actual image MIME type instead of hardcoding `image/png`
+- Peer fetcher now populates `ImageMimeType` from the HTTP response `Content-Type` header
+- Re-copying an image from omaclip no longer triggers a spurious "exceeds size limit" warning
+
 ## [0.2.1] - 2026-04-10
 
 ### Changed
