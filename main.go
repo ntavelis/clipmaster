@@ -31,7 +31,7 @@ type appConfig struct {
 	Debug          bool   `conf:"default:false,help:enable debug log level"`
 	Clipboard      struct {
 		MaxHistory   int           `conf:"default:50,help:maximum number of clipboard entries to keep in history"`
-		MaxImageMB   int           `conf:"default:25,help:maximum image size in megabytes to accept into clipboard history"`
+		MaxImageMB   int           `conf:"default:5,help:maximum image size in megabytes to accept into clipboard history"`
 		PollInterval time.Duration `conf:"default:2s,help:in case we fallback to polling how often to poll the system clipboard"`
 	}
 	RemoteClipboards struct {
