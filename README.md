@@ -106,14 +106,14 @@ Omaclip can be configured via CLI flags or environment variables. Run
 ### Passphrase
 
 On first launch, omaclip will prompt for a passphrase used to secure peer
-sync. It is saved to `~/.config/omaclip/config.json`. All machines must
+sync. It is saved by default to `~/.config/omaclip/config.json`. All machines must
 share the same passphrase to discover and sync with each other.
 
 ### mDNS interface binding
 
 By default, mDNS peer discovery broadcasts on all network interfaces. On
-machines with multiple NICs (e.g. WiFi + Ethernet + Docker bridge), you can
-bind to a specific interface:
+machines with multiple NICs (e.g. WiFi + Ethernet + VPN), you can bind to a
+specific interface:
 
 ```bash
 # CLI flag
