@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Remote sync endpoint now returns up to `MaxHistory` valid entries even when rejected image entries are present in history; previously rejected entries consumed slots in the limit, causing fewer entries to be returned to peers
+
 ## [0.3.0] - 2026-04-10
 
 ### Changed

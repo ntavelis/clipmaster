@@ -11,9 +11,15 @@ import (
 	"github.com/rhemvi/omaclip/business/passphrase"
 )
 
+// clipboardMonitor is the subset of clipboard.Monitor used by ClipboardHandler.
+type clipboardMonitor interface {
+	GetHistory() []clipboard.ClipboardEntry
+	GetEntry(id string) (clipboard.ClipboardEntry, bool)
+}
+
 // ClipboardHandler holds dependencies for all HTTP handlers.
 type ClipboardHandler struct {
-	Monitor         *clipboard.Monitor
+	Monitor         clipboardMonitor
 	MaxHistory      int
 	PassphraseStore *passphrase.Store
 }
@@ -33,11 +39,12 @@ func RequirePassphrase(store *passphrase.Store, next http.HandlerFunc) http.Hand
 // Image entries are included but without their ImageData payload.
 func (h *ClipboardHandler) GetClipboard(w http.ResponseWriter, r *http.Request) {
 	all := h.Monitor.GetHistory()
-	limit := min(h.MaxHistory, len(all))
-	entries := all[:limit]
 
-	stripped := make([]clipboard.ClipboardEntry, 0, len(entries))
-	for _, e := range entries {
+	stripped := make([]clipboard.ClipboardEntry, 0, h.MaxHistory)
+	for _, e := range all {
+		if len(stripped) >= h.MaxHistory {
+			break
+		}
 		if e.ContentType == "image-rejected" {
 			continue
 		}
