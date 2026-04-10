@@ -177,32 +177,37 @@ func (f *Fetcher) fetchPeer(p fmdns.Peer) ([]clipboard.ClipboardEntry, error) {
 		if e.ContentType != "image" {
 			continue
 		}
-		imgData, err := f.fetchPeerImage(baseURL, e.ID)
+		imgData, contentType, err := f.fetchPeerImage(baseURL, e.ID)
 		if err != nil {
 			f.log.Debug("failed to fetch peer image", "peer", p.Name, "id", e.ID, "error", err)
 			continue
 		}
 		entries[i].ImageData = base64.StdEncoding.EncodeToString(imgData)
+		entries[i].ImageMimeType = contentType
 	}
 
 	return entries, nil
 }
 
-func (f *Fetcher) fetchPeerImage(baseURL, id string) ([]byte, error) {
+func (f *Fetcher) fetchPeerImage(baseURL, id string) ([]byte, string, error) {
 	req, err := http.NewRequest(http.MethodGet, baseURL+"/api/clipboard/"+id+"/image", nil)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	req.Header.Set("X-Omaclip-Pass", f.passphraseStore.Hash())
 
 	resp, err := f.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+		return nil, "", fmt.Errorf("unexpected status %d", resp.StatusCode)
 	}
-	return io.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", err
+	}
+	return data, resp.Header.Get("Content-Type"), nil
 }

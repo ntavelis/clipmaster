@@ -84,6 +84,8 @@ All configurable via environment variables (`OMACLIP_<FLAG>`) or command-line ar
 |------|---------|-------------|
 | `OMACLIP_DEBUG` | `false` | Enable debug-level logging |
 | `OMACLIP_CLIPBOARD_MAX_HISTORY` | `50` | Max local clipboard entries |
+| `OMACLIP_CLIPBOARD_MAX_PNG_IMAGE_MB` | `5` | Max PNG image size (MB) to accept into clipboard history |
+| `OMACLIP_CLIPBOARD_MAX_NON_PNG_IMAGE_MB` | `2` | Max non-PNG image size (MB) to accept (e.g. JPEG from file managers or macOS clipboard) |
 | `OMACLIP_CLIPBOARD_POLL_INTERVAL` | `500ms` | Local clipboard poll frequency |
 | `OMACLIP_REMOTE_CLIPBOARDS_MAX_HISTORY` | `5` | Max local entries transmitted to remote peers |
 | `OMACLIP_REMOTE_CLIPBOARDS_POLL_INTERVAL` | `1s` | Peer fetch frequency |

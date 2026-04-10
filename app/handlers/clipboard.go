@@ -46,7 +46,7 @@ func (h *ClipboardHandler) GetClipboard(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(stripped) //nolint:errcheck
 }
 
-// GetClipboardImage returns the raw PNG bytes for a specific clipboard entry.
+// GetClipboardImage returns the raw image bytes for a specific clipboard entry.
 func (h *ClipboardHandler) GetClipboardImage(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	entry, ok := h.Monitor.GetEntry(id)
@@ -61,6 +61,6 @@ func (h *ClipboardHandler) GetClipboardImage(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Content-Type", entry.ImageMimeType)
 	w.Write(imgBytes) //nolint:errcheck
 }

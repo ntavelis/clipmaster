@@ -30,9 +30,10 @@ type appConfig struct {
 	ConfigPath     string `conf:"help:path to the omaclip config file (default: $HOME/.config/omaclip/config.json)"`
 	Debug          bool   `conf:"default:false,help:enable debug log level"`
 	Clipboard      struct {
-		MaxHistory   int           `conf:"default:50,help:maximum number of clipboard entries to keep in history"`
-		MaxImageMB   int           `conf:"default:5,help:maximum image size in megabytes to accept into clipboard history"`
-		PollInterval time.Duration `conf:"default:2s,help:in case we fallback to polling how often to poll the system clipboard"`
+		MaxHistory       int           `conf:"default:50,help:maximum number of clipboard entries to keep in history"`
+		MaxPngImageMB    int           `conf:"default:5,help:maximum PNG image size in megabytes to accept into clipboard history"`
+		MaxNonPngImageMB int           `conf:"default:2,help:maximum non-PNG image size in megabytes to accept into clipboard history (e.g. JPEG from file managers or macOS clipboard)"`
+		PollInterval     time.Duration `conf:"default:2s,help:in case we fallback to polling how often to poll the system clipboard"`
 	}
 	RemoteClipboards struct {
 		MaxHistory   int           `conf:"default:5,help:maximum number of local clipboard entries to transmit to remote peers"`
@@ -83,14 +84,15 @@ func run() error {
 
 	application := app.NewApp(log, app.Config{
 		MaxHistory:                   cfg.Clipboard.MaxHistory,
-		MaxImageMB:                   cfg.Clipboard.MaxImageMB,
+		MaxPngImageMB:                cfg.Clipboard.MaxPngImageMB,
+		MaxNonPngImageMB:             cfg.Clipboard.MaxNonPngImageMB,
 		ThemeColorPath:               cfg.ThemeColorPath,
 		ConfigPath:                   cfg.ConfigPath,
 		PollInterval:                 cfg.Clipboard.PollInterval,
 		RemoteClipboardsPollInterval: cfg.RemoteClipboards.PollInterval,
 		RemoteClipboardsMaxHistory:   cfg.RemoteClipboards.MaxHistory,
 		PeersPollInterval:            cfg.Peers.PollInterval,
-		PeersMDNSInterface:          cfg.Peers.MDNSInterface,
+		PeersMDNSInterface:           cfg.Peers.MDNSInterface,
 		DisableRemoteClipboards:      cfg.RemoteClipboards.Disable,
 	})
 

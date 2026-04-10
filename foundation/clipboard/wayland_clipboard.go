@@ -119,7 +119,6 @@ func (w WaylandClipboard) Watch(ctx context.Context, notify chan<- struct{}) err
 	return nil
 }
 
-
 // wlPasteFileImagePath reads text/uri-list from the clipboard and returns the
 // local file path if it points to a single image file.
 func wlPasteFileImagePath() string {
@@ -128,7 +127,7 @@ func wlPasteFileImagePath() string {
 	if err != nil {
 		return ""
 	}
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(string(out)), "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "#") || line == "" {
 			continue

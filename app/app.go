@@ -27,7 +27,8 @@ import (
 // Config holds all configurable values for the application.
 type Config struct {
 	MaxHistory                   int
-	MaxImageMB                   int
+	MaxPngImageMB                int
+	MaxNonPngImageMB             int
 	ThemeColorPath               string
 	ConfigPath                   string
 	PollInterval                 time.Duration
@@ -71,7 +72,7 @@ func (a *App) Startup(ctx context.Context) {
 		os.Exit(1)
 	}
 	a.log.Info("clipboard backend selected", "backend", backend)
-	a.monitor = clipboard.NewMonitor(a.log, reader, writer, a.cfg.MaxHistory, a.cfg.MaxImageMB, a.cfg.PollInterval)
+	a.monitor = clipboard.NewMonitor(a.log, reader, writer, a.cfg.MaxHistory, a.cfg.MaxPngImageMB, a.cfg.MaxNonPngImageMB, a.cfg.PollInterval)
 
 	if areWeRunningInOmarchy(a.cfg.ThemeColorPath) {
 		colors, err := theme.Load(a.cfg.ThemeColorPath)
