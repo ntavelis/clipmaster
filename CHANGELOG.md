@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-04-11
+
+### Fixed
+
+- macOS: prefer PNG over JPEG when reading images from the clipboard, preventing duplicate history entries when copying an image back from history
+- macOS: copying a non-image file (e.g. PDF) no longer adds the file's icon to clipboard history
+
 ## [0.3.3] - 2026-04-11
 
 ### Added

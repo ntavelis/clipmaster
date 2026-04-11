@@ -40,7 +40,7 @@ func (d DarwinClipboard) GetText(ctx context.Context) (string, error) {
 
 // GetImage returns image bytes from the clipboard. It prefers reading the
 // original file when a file URL is present (Finder copy), falling back to
-// JPEG clipboard data, then PNG.
+// PNG clipboard data, then JPEG.
 func (d DarwinClipboard) GetImage(ctx context.Context) ([]byte, error) {
 	info, err := d.clipboardInfo(ctx)
 	if err != nil {
@@ -49,11 +49,21 @@ func (d DarwinClipboard) GetImage(ctx context.Context) ([]byte, error) {
 
 	if containsType(info, "«class furl»") || containsType(info, "public.file-url") {
 		path := d.fileURL(ctx)
-		if path != "" && isImageFile(path) {
-			data, err := os.ReadFile(path)
-			if err == nil {
-				return data, nil
+		if path != "" {
+			if isImageFile(path) {
+				data, err := os.ReadFile(path)
+				if err == nil {
+					return data, nil
+				}
 			}
+			return nil, nil
+		}
+	}
+
+	if containsType(info, "PNGf") {
+		data, err := d.readClipboardAs(ctx, "«class PNGf»", "omaclip-read-*.png")
+		if err == nil && len(data) > 0 {
+			return data, nil
 		}
 	}
 
@@ -64,11 +74,7 @@ func (d DarwinClipboard) GetImage(ctx context.Context) ([]byte, error) {
 		}
 	}
 
-	if !containsType(info, "PNGf") {
-		return nil, nil
-	}
-
-	return d.readClipboardAs(ctx, "«class PNGf»", "omaclip-read-*.png")
+	return nil, nil
 }
 
 // SetText writes text to the clipboard using pbcopy.

@@ -86,9 +86,9 @@ All configurable via environment variables (`OMACLIP_<FLAG>`) or command-line ar
 | `OMACLIP_CLIPBOARD_MAX_HISTORY` | `50` | Max local clipboard entries |
 | `OMACLIP_CLIPBOARD_MAX_PNG_IMAGE_MB` | `5` | Max PNG image size (MB) to accept into clipboard history |
 | `OMACLIP_CLIPBOARD_MAX_NON_PNG_IMAGE_MB` | `2` | Max non-PNG image size (MB) to accept (e.g. JPEG from file managers or macOS clipboard) |
-| `OMACLIP_CLIPBOARD_POLL_INTERVAL` | `500ms` | Local clipboard poll frequency |
+| `OMACLIP_CLIPBOARD_POLL_INTERVAL` | `2s` | Local clipboard poll frequency (fallback when watching is not supported) |
 | `OMACLIP_REMOTE_CLIPBOARDS_MAX_HISTORY` | `5` | Max local entries transmitted to remote peers |
-| `OMACLIP_REMOTE_CLIPBOARDS_POLL_INTERVAL` | `1s` | Peer fetch frequency |
+| `OMACLIP_REMOTE_CLIPBOARDS_POLL_INTERVAL` | `2s` | Peer fetch frequency |
 | `OMACLIP_REMOTE_CLIPBOARDS_DISABLE` | `false` | Disable remote sync entirely |
 | `OMACLIP_PEERS_POLL_INTERVAL` | `2s` | mDNS browse frequency |
 | `OMACLIP_PEERS_MDNS_INTERFACE` | `` | Bind mDNS to a specific network interface (e.g. `wlan0`) |
