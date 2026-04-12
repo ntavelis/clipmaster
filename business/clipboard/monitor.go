@@ -22,6 +22,8 @@ import (
 	_ "golang.org/x/image/bmp"
 	_ "golang.org/x/image/tiff"
 	_ "golang.org/x/image/webp"
+
+	"github.com/rhemvi/omaclip/foundation/imagefilereader"
 )
 
 // ErrNoConversion is returned by toPNG when the image format is not supported for PNG conversion.
@@ -250,6 +252,16 @@ func (m *Monitor) readClipboard(parent context.Context) {
 
 	imgData, imgErr := m.reader.GetImage(ctx)
 	if imgErr != nil {
+		if errors.Is(imgErr, imagefilereader.ErrImageTooLarge) {
+			m.log.Warn("image rejected before reading: file too large", "error", imgErr)
+			m.addEntry(ClipboardEntry{
+				ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
+				ContentType: "image-rejected",
+				Content:     imgErr.Error(),
+				Timestamp:   time.Now(),
+			})
+			return
+		}
 		m.log.Error("clipboard image read failed", "error", imgErr)
 	}
 	var imgHash string

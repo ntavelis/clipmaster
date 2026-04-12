@@ -68,7 +68,7 @@ func TestNewReaderWriter(t *testing.T) {
 			availableFn = mockAvailable(tt.available...)
 			t.Cleanup(func() { availableFn = original })
 
-			_, _, backend, err := NewReaderWriter()
+			_, _, backend, err := NewReaderWriter(5, 2)
 
 			if tt.wantErr {
 				if err == nil {

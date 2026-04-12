@@ -1,7 +1,6 @@
 package clipboard
 
 import (
-	"path/filepath"
 	"slices"
 	"strings"
 )
@@ -13,17 +12,6 @@ var preferredImageTypes = []string{
 	"image/bmp",
 	"image/tiff",
 	"image/webp",
-}
-
-var imageFileExtensions = []string{
-	".png", ".jpg", ".jpeg",
-	".gif", ".bmp", ".tiff", ".tif",
-	".webp", ".avif", ".heic", ".heif",
-}
-
-func isImageFile(path string) bool {
-	ext := strings.ToLower(filepath.Ext(path))
-	return slices.Contains(imageFileExtensions, ext)
 }
 
 type clipboardTypes struct {

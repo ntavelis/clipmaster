@@ -2,15 +2,20 @@ package clipboard
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/rhemvi/omaclip/foundation/imagefilereader"
 )
 
 // DarwinClipboard reads and writes the macOS clipboard using pbpaste/pbcopy for text
 // and osascript for image operations.
-type DarwinClipboard struct{}
+type DarwinClipboard struct {
+	imgReader imagefilereader.Reader
+}
 
 // GetText returns the current clipboard text using pbpaste. Returns empty if the clipboard only contains non-text types.
 func (d DarwinClipboard) GetText(ctx context.Context) (string, error) {
@@ -47,10 +52,13 @@ func (d DarwinClipboard) GetImage(ctx context.Context) ([]byte, error) {
 	if containsType(info, "«class furl»") || containsType(info, "public.file-url") {
 		path := d.fileURL(ctx)
 		if path != "" {
-			if isImageFile(path) {
-				data, err := os.ReadFile(path)
+			if imagefilereader.IsImage(path) {
+				data, err := d.imgReader.ReadImageFile(path)
 				if err == nil {
 					return data, nil
+				}
+				if errors.Is(err, imagefilereader.ErrImageTooLarge) {
+					return nil, err
 				}
 			}
 			return nil, nil

@@ -3,15 +3,19 @@ package clipboard
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/rhemvi/omaclip/foundation/imagefilereader"
 )
 
 // XclipClipboard reads and writes the system clipboard via xclip (X11).
-type XclipClipboard struct{}
+type XclipClipboard struct {
+	imgReader imagefilereader.Reader
+}
 
 // GetText returns the current clipboard text using xclip. Returns empty if the clipboard only contains non-text types.
 func (x XclipClipboard) GetText(ctx context.Context) (string, error) {
@@ -43,9 +47,12 @@ func (x XclipClipboard) GetImage(ctx context.Context) ([]byte, error) {
 	// If a file URI is present and points to an image, read it directly.
 	if types.hasFileList {
 		if path := xclipFileImagePath(ctx); path != "" {
-			data, err := os.ReadFile(path)
+			data, err := x.imgReader.ReadImageFile(path)
 			if err == nil {
 				return data, nil
+			}
+			if errors.Is(err, imagefilereader.ErrImageTooLarge) {
+				return nil, err
 			}
 		}
 	}
@@ -95,7 +102,7 @@ func xclipFileImagePath(ctx context.Context) string {
 			continue
 		}
 		path := u.Path
-		if isImageFile(path) {
+		if imagefilereader.IsImage(path) {
 			return path
 		}
 	}

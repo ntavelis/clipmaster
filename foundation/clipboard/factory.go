@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"os/exec"
+
+	"github.com/rhemvi/omaclip/foundation/imagefilereader"
 )
 
 var (
@@ -26,19 +28,21 @@ type Writer interface {
 // NewReaderWriter returns the first available clipboard reader and writer by probing known binaries in order:
 // wl-paste (Wayland) → xclip (X11) → xsel (X11) → osascript+pbpaste (macOS).
 // The returned string identifies the selected backend.
-func NewReaderWriter() (Reader, Writer, string, error) {
+func NewReaderWriter(maxPngImageMB, maxNonPngImageMB int) (Reader, Writer, string, error) {
+	imgReader := imagefilereader.NewReader(maxPngImageMB, maxNonPngImageMB)
+
 	switch {
 	case availableFn("wl-paste"):
-		w := WaylandClipboard{}
+		w := WaylandClipboard{imgReader: imgReader}
 		return w, w, "wayland (wl-paste)", nil
 	case availableFn("xclip"):
-		x := XclipClipboard{}
+		x := XclipClipboard{imgReader: imgReader}
 		return x, x, "x11 (xclip)", nil
 	case availableFn("xsel"):
 		s := XselClipboard{}
 		return s, s, "x11 (xsel)", nil
 	case availableFn("osascript") && availableFn("pbpaste"):
-		o := DarwinClipboard{}
+		o := DarwinClipboard{imgReader: imgReader}
 		return o, o, "darwin (osascript+pbpaste)", nil
 	default:
 		return nil, nil, "", ErrNoClipAvailable

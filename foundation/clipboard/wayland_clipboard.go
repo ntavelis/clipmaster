@@ -5,15 +5,19 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/rhemvi/omaclip/foundation/imagefilereader"
 )
 
 // WaylandClipboard reads and writes the system clipboard via wl-paste/wl-copy.
-type WaylandClipboard struct{}
+type WaylandClipboard struct {
+	imgReader imagefilereader.Reader
+}
 
 // GetText returns the current clipboard contents using wl-paste. Returns empty if the clipboard only contains non-text types (e.g. image).
 func (w WaylandClipboard) GetText(ctx context.Context) (string, error) {
@@ -57,9 +61,12 @@ func (w WaylandClipboard) GetImage(ctx context.Context) ([]byte, error) {
 	// If a file URI is present and points to an image, read it directly.
 	if types.hasFileList {
 		if path := wlPasteFileImagePath(ctx); path != "" {
-			data, err := os.ReadFile(path)
+			data, err := w.imgReader.ReadImageFile(path)
 			if err == nil {
 				return data, nil
+			}
+			if errors.Is(err, imagefilereader.ErrImageTooLarge) {
+				return nil, err
 			}
 		}
 	}
@@ -137,7 +144,7 @@ func wlPasteFileImagePath(ctx context.Context) string {
 			continue
 		}
 		path := u.Path
-		if isImageFile(path) {
+		if imagefilereader.IsImage(path) {
 			return path
 		}
 	}
