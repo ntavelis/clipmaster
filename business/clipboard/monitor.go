@@ -249,6 +249,9 @@ func (m *Monitor) readClipboard(parent context.Context) {
 	textChanged := err == nil && text != "" && text != m.lastSeen
 
 	imgData, imgErr := m.reader.GetImage(ctx)
+	if imgErr != nil {
+		m.log.Error("clipboard image read failed", "error", imgErr)
+	}
 	var imgHash string
 	if imgErr == nil && len(imgData) > 0 {
 		imgHash = sha256Hex(imgData)

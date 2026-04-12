@@ -59,14 +59,20 @@ func (d DarwinClipboard) GetImage(ctx context.Context) ([]byte, error) {
 
 	if containsType(info, "PNGf") {
 		data, err := d.readClipboardAs(ctx, "«class PNGf»", "omaclip-read-*.png")
-		if err == nil && len(data) > 0 {
+		if err != nil {
+			return nil, fmt.Errorf("read PNGf: %w", err)
+		}
+		if len(data) > 0 {
 			return data, nil
 		}
 	}
 
 	if containsType(info, "JPEG picture") {
 		data, err := d.readClipboardAs(ctx, "JPEG picture", "omaclip-read-*.jpg")
-		if err == nil && len(data) > 0 {
+		if err != nil {
+			return nil, fmt.Errorf("read JPEG: %w", err)
+		}
+		if len(data) > 0 {
 			return data, nil
 		}
 	}
