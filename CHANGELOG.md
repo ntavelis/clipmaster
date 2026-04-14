@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-14
+
+### Added
+
+- Manual peers via `OMACLIP_PEERS_LIST` / `--peers-list` flag: specify peers as `[name@]ip:port` (e.g. `dell@192.168.1.53:36742` or `192.168.1.53:36742`); when set, mDNS discovery is skipped entirely. The `name@` prefix is optional — if omitted, the peer is displayed as `ip:port` in the UI.
+
 ## [0.4.1] - 2026-04-13
 
 ### Fixed

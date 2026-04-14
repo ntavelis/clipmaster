@@ -23,7 +23,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-const appVersion = "0.4.1"
+const appVersion = "0.5.0"
 
 type appConfig struct {
 	ThemeColorPath string `conf:"help:fullpath to the Omarchy theme colors.toml file (default: $HOME/.config/omarchy/current/theme/colors.toml)"`
@@ -43,6 +43,7 @@ type appConfig struct {
 	Peers struct {
 		PollInterval  time.Duration `conf:"default:2s,help:how often to browse for peers on the local network via mDNS"`
 		MDNSInterface string        `conf:"help:bind mDNS to a specific network interface (e.g. wlan0) instead of all interfaces"`
+		List          []string      `conf:"help:manually specify peers [name@]ip:port (e.g. dell@192.168.1.53:36742 or 192.168.1.53:36742) will disable mDNS peer discovery if set"`
 	}
 	conf.Version
 }
@@ -94,6 +95,7 @@ func run() error {
 		PeersPollInterval:            cfg.Peers.PollInterval,
 		PeersMDNSInterface:           cfg.Peers.MDNSInterface,
 		DisableRemoteClipboards:      cfg.RemoteClipboards.Disable,
+		ManualPeersList:              cfg.Peers.List,
 	})
 
 	if err := wails.Run(&options.App{

@@ -19,6 +19,7 @@ import (
 	osclip "github.com/rhemvi/omaclip/foundation/clipboard"
 	fconfig "github.com/rhemvi/omaclip/foundation/config"
 	fmdns "github.com/rhemvi/omaclip/foundation/mdns"
+	"github.com/rhemvi/omaclip/foundation/peers"
 	"github.com/rhemvi/omaclip/foundation/tlscert"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -37,6 +38,12 @@ type Config struct {
 	PeersPollInterval            time.Duration
 	PeersMDNSInterface           string
 	DisableRemoteClipboards      bool
+	ManualPeersList              []string
+}
+
+// peersProvider is satisfied by any type that can return a list of peers.
+type peersProvider interface {
+	Peers() []fmdns.Peer
 }
 
 // App is the Wails bind target. It owns startup/shutdown and delegates to business packages.
@@ -235,26 +242,31 @@ func (a *App) startNetworking() error {
 		return fmt.Errorf("failed to start sync https server: %w", err)
 	}
 
-	host, _ := os.Hostname()
-	discoverer, err := fmdns.New(
-		a.log,
-		a.cfg.PeersPollInterval,
-		host,
-		a.passphraseStore,
-		a.cfg.PeersMDNSInterface,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to start mDNS discoverer: %w", err)
+	var provider peersProvider
+	if len(a.cfg.ManualPeersList) > 0 {
+		a.log.Info("using manual peers list", "peers", a.cfg.ManualPeersList)
+		provider = peers.New(a.cfg.ManualPeersList)
+	} else {
+		host, _ := os.Hostname()
+		a.discoverer, err = fmdns.New(
+			a.log,
+			a.cfg.PeersPollInterval,
+			host,
+			a.passphraseStore,
+			a.cfg.PeersMDNSInterface,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to start mDNS discoverer: %w", err)
+		}
+		if err := a.discoverer.Register(a.syncServer.Port()); err != nil {
+			return fmt.Errorf("failed to register mDNS service to network %w", err)
+		}
+		a.discoverer.Start(a.ctx)
+		provider = a.discoverer
 	}
-	a.discoverer = discoverer
-	if err := a.discoverer.Register(a.syncServer.Port()); err != nil {
-		return fmt.Errorf("failed to register mDNS service to network %w", err)
-	}
-	a.discoverer.Start(a.ctx)
-
 	a.peerFetcher = peersclipsync.New(
 		a.log,
-		a.discoverer,
+		provider,
 		a.cfg.RemoteClipboardsPollInterval,
 		a.passphraseStore,
 		caPool,

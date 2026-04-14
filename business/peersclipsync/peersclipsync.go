@@ -51,7 +51,7 @@ type Fetcher struct {
 // peer leaf certificates can be verified without InsecureSkipVerify.
 func New(
 	log *slog.Logger,
-	discoverer *fmdns.Discoverer,
+	discoverer peersProvider,
 	syncInterval time.Duration,
 	ps *passphrase.Store,
 	caPool *x509.CertPool,
@@ -128,7 +128,10 @@ func (f *Fetcher) fetchAll() {
 			f.log.Debug("failed to fetch peer clipboard", "peer", p.Name, "error", err)
 			continue
 		}
-		displayName := strings.SplitN(p.Name, ".", 2)[0]
+		displayName := p.Name
+		if !strings.Contains(p.Name, ":") {
+			displayName = strings.SplitN(p.Name, ".", 2)[0]
+		}
 		f.mu.Lock()
 		existing, exists := f.cache[p.Name]
 		if !exists || !sameEntryIDs(existing.Entries, entries) {
