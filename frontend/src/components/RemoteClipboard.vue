@@ -37,6 +37,7 @@ onUnmounted(() => {
           v-for="entry in entriesForPeer(peer.peerName)"
           :key="entry.id"
           :entry="entry"
+          :pinnable="false"
           :index="remote.flatEntries.indexOf(entry)"
           :selected="remote.flatEntries.indexOf(entry) === remote.selectedIndex"
           :copied="remote.lastCopiedId === entry.id"

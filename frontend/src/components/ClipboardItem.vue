@@ -26,6 +26,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  pinnable: {
+    type: Boolean,
+    default: true,
+  },
   keyboardActive: {
     type: Boolean,
     default: false,
@@ -110,8 +114,8 @@ function formatTime(timestamp) {
   </div>
 
   <div v-else ref="rowRef"
-    class="group relative flex items-start gap-3 px-4 py-3 border-b border-color8 cursor-pointer transition-colors"
-    :class="[selected ? 'bg-color8/50' : '', keyboardActive ? '' : 'hover:bg-color8/50']" @click="handleCopy" @contextmenu.prevent="emit('toggle-expand')"
+    class="group relative flex items-start gap-3 px-4 py-3 border-b border-color8 cursor-pointer transition-colors border-l-2"
+    :class="[selected ? 'bg-color8/50' : '', keyboardActive ? '' : 'hover:bg-color8/50', pinned ? 'border-l-accent' : 'border-l-transparent']" @click="handleCopy" @contextmenu.prevent="emit('toggle-expand')"
     @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
     <span class="shrink-0 w-3 text-[10px] leading-4 text-color2 text-center">{{ index < 9 ? index + 1 : '·' }}</span>
 
@@ -133,7 +137,7 @@ function formatTime(timestamp) {
           </svg>
         </button>
 
-        <button
+        <button v-if="pinnable"
           class="shrink-0 mt-0.5 cursor-pointer transition-colors"
           :class="pinned ? 'text-accent' : 'text-color6 hover:text-accent'"
           :title="pinned ? 'Unpin' : 'Pin to top'"
