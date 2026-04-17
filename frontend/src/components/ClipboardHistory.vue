@@ -7,6 +7,7 @@ import ClipboardItem from './ClipboardItem.vue'
 const clipboard = useClipboardStore()
 
 onMounted(() => {
+  clipboard.fetchMaxPinned()
   clipboard.fetchHistory()
   EventsOn('clipboard:new', clipboard.fetchHistory)
 })
@@ -19,20 +20,22 @@ onUnmounted(() => {
 <template>
   <div class="flex flex-col h-full">
     <div class="flex-1 overflow-y-auto">
-      <p v-if="clipboard.items.length === 0" class="text-center text-color7 mt-8 text-sm">
+      <p v-if="clipboard.orderedItems.length === 0" class="text-center text-color7 mt-8 text-sm">
         Nothing copied yet.
       </p>
       <ClipboardItem
-        v-for="(entry, index) in clipboard.items"
+        v-for="(entry, index) in clipboard.orderedItems"
         :key="entry.id"
         :entry="entry"
         :index="index"
         :selected="index === clipboard.selectedIndex"
         :copied="clipboard.lastCopiedId === entry.id"
         :expanded="clipboard.expandedIds.has(entry.id)"
+        :pinned="clipboard.pinnedIds.includes(entry.id)"
         :keyboard-active="clipboard.keyboardActive"
         @copy="clipboard.copyItem(entry.id)"
         @toggle-expand="clipboard.toggleExpanded(entry.id)"
+        @toggle-pin="clipboard.togglePin(entry.id)"
       />
     </div>
   </div>

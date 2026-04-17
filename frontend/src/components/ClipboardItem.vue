@@ -22,13 +22,17 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  pinned: {
+    type: Boolean,
+    default: false,
+  },
   keyboardActive: {
     type: Boolean,
     default: false,
   },
 })
 
-const emit = defineEmits(['copy', 'toggle-expand'])
+const emit = defineEmits(['copy', 'toggle-expand', 'toggle-pin'])
 
 const isOverflowing = ref(false)
 const hovered = ref(false)
@@ -126,6 +130,19 @@ function formatTime(timestamp) {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
             <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+
+        <button
+          class="shrink-0 mt-0.5 cursor-pointer transition-colors"
+          :class="pinned ? 'text-accent' : 'text-color6 hover:text-accent'"
+          :title="pinned ? 'Unpin' : 'Pin to top'"
+          @click.stop="emit('toggle-pin')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+            :fill="pinned ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+            <path d="M12 17v5" />
+            <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
           </svg>
         </button>
 

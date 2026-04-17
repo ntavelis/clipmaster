@@ -31,6 +31,7 @@ type appConfig struct {
 	Debug          bool   `conf:"default:false,help:enable debug log level"`
 	Clipboard      struct {
 		MaxHistory       int           `conf:"default:50,help:maximum number of clipboard entries to keep in history"`
+		MaxPinned        int           `conf:"default:3,help:maximum number of clipboard items that can be pinned at the top of the list"`
 		MaxPngImageMB    int           `conf:"default:5,help:maximum PNG image size in megabytes to accept into clipboard history"`
 		MaxNonPngImageMB int           `conf:"default:2,help:maximum non-PNG image size in megabytes to accept into clipboard history (e.g. JPEG from file managers or macOS clipboard)"`
 		PollInterval     time.Duration `conf:"default:2s,help:in case we fallback to polling how often to poll the system clipboard"`
@@ -85,6 +86,7 @@ func run() error {
 
 	application := app.NewApp(log, app.Config{
 		MaxHistory:                   cfg.Clipboard.MaxHistory,
+		MaxPinned:                    cfg.Clipboard.MaxPinned,
 		MaxPngImageMB:                cfg.Clipboard.MaxPngImageMB,
 		MaxNonPngImageMB:             cfg.Clipboard.MaxNonPngImageMB,
 		ThemeColorPath:               cfg.ThemeColorPath,

@@ -24,6 +24,7 @@ A Wails desktop clipboard manager that tracks clipboard history and syncs across
 
 - In-memory only (no persistence across restarts)
 - Default max: 50 items, configurable via `OMACLIP_CLIPBOARD_MAX_HISTORY`
+- Items can be pinned to the top of the list (local tab only, in-memory only); default max: 3 pins, configurable via `OMACLIP_CLIPBOARD_MAX_PINNED`. Exceeding the cap auto-unpins the oldest pin (FIFO).
 - Supports text and images (max 25 MB per image); content type is either `"text"` or `"image"`
 - Images are normalised to PNG at ingestion (`image.Decode` + `png.Encode`) regardless of original format; stored as base64-encoded PNG in `ClipboardEntry.ImageData`; `ClipboardEntry.ImageMimeType` carries the MIME type (`"image/png"` after normalisation)
 - SHA-256 used for duplicate detection
@@ -84,6 +85,7 @@ All configurable via environment variables (`OMACLIP_<FLAG>`) or command-line ar
 |------|---------|-------------|
 | `OMACLIP_DEBUG` | `false` | Enable debug-level logging |
 | `OMACLIP_CLIPBOARD_MAX_HISTORY` | `50` | Max local clipboard entries |
+| `OMACLIP_CLIPBOARD_MAX_PINNED` | `3` | Max number of clipboard items that can be pinned at the top of the list |
 | `OMACLIP_CLIPBOARD_MAX_PNG_IMAGE_MB` | `5` | Max PNG image size (MB) to accept into clipboard history |
 | `OMACLIP_CLIPBOARD_MAX_NON_PNG_IMAGE_MB` | `2` | Max non-PNG image size (MB) to accept (e.g. JPEG from file managers or macOS clipboard) |
 | `OMACLIP_CLIPBOARD_POLL_INTERVAL` | `2s` | Local clipboard poll frequency (fallback when watching is not supported) |

@@ -22,6 +22,10 @@ export function GetHistory() {
   return window['go']['app']['App']['GetHistory']();
 }
 
+export function GetMaxPinned() {
+  return window['go']['app']['App']['GetMaxPinned']();
+}
+
 export function GetRemoteClipboards() {
   return window['go']['app']['App']['GetRemoteClipboards']();
 }
@@ -36,6 +40,10 @@ export function NeedsPassphrase() {
 
 export function RemoteClipboardsEnabled() {
   return window['go']['app']['App']['RemoteClipboardsEnabled']();
+}
+
+export function SetPinnedIDs(arg1) {
+  return window['go']['app']['App']['SetPinnedIDs'](arg1);
 }
 
 export function SubmitPassphrase(arg1) {

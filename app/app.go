@@ -28,6 +28,7 @@ import (
 // Config holds all configurable values for the application.
 type Config struct {
 	MaxHistory                   int
+	MaxPinned                    int
 	MaxPngImageMB                int
 	MaxNonPngImageMB             int
 	ThemeColorPath               string
@@ -140,6 +141,16 @@ func (a *App) Shutdown(ctx context.Context) {
 // GetHistory returns all clipboard entries in reverse-chronological order.
 func (a *App) GetHistory() []clipboard.ClipboardEntry {
 	return a.monitor.GetHistory()
+}
+
+// GetMaxPinned returns the maximum number of clipboard items that can be pinned.
+func (a *App) GetMaxPinned() int {
+	return a.cfg.MaxPinned
+}
+
+// SetPinnedIDs tells the monitor which entry IDs are currently pinned so they survive history trimming.
+func (a *App) SetPinnedIDs(ids []string) {
+	a.monitor.SetPinnedIDs(ids)
 }
 
 // CopyItem writes the entry with the given ID back to the system clipboard.

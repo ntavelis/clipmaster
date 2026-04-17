@@ -63,6 +63,7 @@ type Monitor struct {
 	cancel           context.CancelFunc
 	reader           Reader
 	writer           Writer
+	pinnedIDs        map[string]struct{}
 	OnNewEntry       func(ClipboardEntry)
 }
 
@@ -84,6 +85,17 @@ func NewMonitor(
 		maxPngImageMB:    maxPngImageMB,
 		maxNonPngImageMB: maxNonPngImageMB,
 		pollInterval:     pollInterval,
+		pinnedIDs:        make(map[string]struct{}),
+	}
+}
+
+// SetPinnedIDs replaces the set of entry IDs that must be preserved from history trimming.
+func (m *Monitor) SetPinnedIDs(ids []string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.pinnedIDs = make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		m.pinnedIDs[id] = struct{}{}
 	}
 }
 
@@ -359,13 +371,24 @@ func toPNG(log *slog.Logger, data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// addEntry appends a new entry to history, trimming to maxHistory, then notifies the callback.
+// addEntry appends a new entry to history, trimming oldest unpinned entries first while pinned entries are preserved, then notifies the callback.
 func (m *Monitor) addEntry(entry ClipboardEntry) {
 	m.mu.Lock()
 
 	m.history = append(m.history, entry)
-	if len(m.history) > m.maxHistory {
-		m.history = m.history[len(m.history)-m.maxHistory:]
+	toRemove := len(m.history) - m.maxHistory
+	if toRemove > 0 {
+		kept := make([]ClipboardEntry, 0, len(m.history))
+		for _, e := range m.history {
+			if toRemove > 0 {
+				if _, pinned := m.pinnedIDs[e.ID]; !pinned {
+					toRemove--
+					continue
+				}
+			}
+			kept = append(kept, e)
+		}
+		m.history = kept
 	}
 
 	cb := m.OnNewEntry

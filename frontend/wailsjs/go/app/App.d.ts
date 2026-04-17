@@ -14,6 +14,8 @@ export function GetConfigPath():Promise<string>;
 
 export function GetHistory():Promise<Array<clipboard.ClipboardEntry>>;
 
+export function GetMaxPinned():Promise<number>;
+
 export function GetRemoteClipboards():Promise<Array<peersclipsync.PeerClipboard>>;
 
 export function GetTheme():Promise<theme.ThemeColors>;
@@ -21,5 +23,7 @@ export function GetTheme():Promise<theme.ThemeColors>;
 export function NeedsPassphrase():Promise<boolean>;
 
 export function RemoteClipboardsEnabled():Promise<boolean>;
+
+export function SetPinnedIDs(arg1:Array<string>):Promise<void>;
 
 export function SubmitPassphrase(arg1:string):Promise<void>;

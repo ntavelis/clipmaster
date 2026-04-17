@@ -22,6 +22,7 @@ const allShortcuts = [
   { keys: 'Up / Down', action: 'Navigate items' },
   { keys: 'Enter', action: 'Copy selected item' },
   { keys: 'Space', action: 'Expand / collapse selected' },
+  { keys: 'P', action: 'Pin / unpin selected item' },
   { keys: 'Escape', action: 'Collapse all / clear selection' },
   { keys: 'Ctrl+1..9', action: 'Quick copy Nth item' },
   { keys: ['[', ']'], action: 'Navigate tabs', remoteOnly: true },
@@ -55,7 +56,7 @@ function handleKeydown(e) {
   }
 
   const store = clipboard.activeTab === 'local' ? clipboard : remote
-  const items = clipboard.activeTab === 'local' ? clipboard.items : remote.flatEntries
+  const items = clipboard.activeTab === 'local' ? clipboard.orderedItems : remote.flatEntries
 
   if (e.key === 'ArrowDown') {
     e.preventDefault()
@@ -88,6 +89,10 @@ function handleKeydown(e) {
     const idx = parseInt(e.key) - 1
     const item = items[idx]
     if (item && item.contentType !== 'image-rejected') store.copyItem(item.id)
+  } else if (e.key === 'p' && clipboard.activeTab === 'local' && clipboard.selectedIndex >= 0) {
+    e.preventDefault()
+    const item = items[clipboard.selectedIndex]
+    if (item && item.contentType !== 'image-rejected') clipboard.togglePin(item.id)
   }
 }
 
