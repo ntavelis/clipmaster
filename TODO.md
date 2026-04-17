@@ -32,8 +32,3 @@
 - Add a search/filter input to the history UI so users can quickly find past entries
 - Filter should work across both local and remote clipboard histories
 
-## 6. Pin Items to Top
-
-- Allow users to pin clipboard entries so they stay at the top of the history list
-- Pinned items should not be pushed down by new clipboard entries
-- Pinned items should be visually distinct

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-17
+
+### Added
+
+- Pin clipboard items to the top of the local history; pinned entries are preserved when history exceeds its cap. Configurable via `OMACLIP_CLIPBOARD_MAX_PINNED` (default 3); exceeding the cap auto-unpins the oldest pin (FIFO). Press `p` to toggle pin on the selected item.
+
 ## [0.5.0] - 2026-04-14
 
 ### Added
