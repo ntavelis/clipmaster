@@ -42,6 +42,36 @@ func TestFilterIPs(t *testing.T) {
 			want: []string{"172.15.255.255", "172.32.0.0"},
 		},
 		{
+			name: "drops loopback IPs",
+			in:   []string{"127.0.0.1", "127.255.255.255", "192.168.1.10"},
+			want: []string{"192.168.1.10"},
+		},
+		{
+			name: "drops unspecified IPs",
+			in:   []string{"0.0.0.0", "10.0.0.5"},
+			want: []string{"10.0.0.5"},
+		},
+		{
+			name: "drops multicast IPs",
+			in:   []string{"224.0.0.1", "239.255.255.255", "192.168.1.10"},
+			want: []string{"192.168.1.10"},
+		},
+		{
+			name: "drops link-local unicast IPs",
+			in:   []string{"169.254.0.1", "169.254.255.255", "10.0.0.5"},
+			want: []string{"10.0.0.5"},
+		},
+		{
+			name: "drops non-global-unicast IPs",
+			in:   []string{"255.255.255.255", "192.168.1.10"},
+			want: []string{"192.168.1.10"},
+		},
+		{
+			name: "drops IPv6 IPs",
+			in:   []string{"::1", "2001:db8::1", "192.168.1.10"},
+			want: []string{"192.168.1.10"},
+		},
+		{
 			name: "empty input",
 			in:   nil,
 			want: nil,
@@ -57,7 +87,7 @@ func TestFilterIPs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var input []net.IP
 			for _, s := range tt.in {
-				input = append(input, net.ParseIP(s).To4())
+				input = append(input, net.ParseIP(s))
 			}
 
 			got := filterIPs(input)

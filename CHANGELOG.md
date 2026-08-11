@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Configurable sync HTTPS server bind address via `OMACLIP_SYNC_SERVER_IP` / `--sync-server-ip` (default `0.0.0.0`) and `OMACLIP_SYNC_SERVER_PORT` / `--sync-server-port` (default `0` for an OS-assigned port)
+
+### Changed
+
+- mDNS advertisement now filters out loopback, unspecified, multicast, link-local, non-global-unicast, IPv6, and Docker bridge-range addresses
+- Moved repository agent instructions to the tool-neutral `AGENTS.md` convention
+
 ## [0.6.1] - 2026-04-17
 
 ### Fixed
