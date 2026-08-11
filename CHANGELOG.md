@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-11
+
 ### Added
 
 - Configurable sync HTTPS server port via `OMACLIP_SYNC_SERVER_PORT` / `--sync-server-port`; the server always listens on all IPv4 interfaces and defaults to an OS-assigned port
