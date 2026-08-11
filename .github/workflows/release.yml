@@ -5,9 +5,6 @@ on:
     tags:
       - "v*"
 
-env:
-  WAILS_VERSION: v2.12.0
-
 jobs:
   build-linux-amd64:
     runs-on: ubuntu-latest
@@ -27,7 +24,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@$(go list -m github.com/wailsapp/wails/v2 | cut -d' ' -f2)
 
       - name: Install Linux dependencies
         run: |
@@ -67,7 +64,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@$(go list -m github.com/wailsapp/wails/v2 | cut -d' ' -f2)
 
       - name: Install Linux dependencies
         run: |
@@ -107,7 +104,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@$(go list -m github.com/wailsapp/wails/v2 | cut -d' ' -f2)
 
       - name: Build
         run: |
@@ -148,7 +145,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@$(go list -m github.com/wailsapp/wails/v2 | cut -d' ' -f2)
 
       - name: Build
         run: |

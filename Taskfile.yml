@@ -1,5 +1,8 @@
 version: "3"
 
+vars:
+  GOLANGCI_LINT_VERSION: v2.12.2
+
 tasks:
   default:
     cmds:
@@ -12,8 +15,15 @@ tasks:
     cmds:
       - npm run build
 
+  wails:install:
+    desc: Install the pinned Wails CLI version
+    internal: true
+    cmds:
+      - go install github.com/wailsapp/wails/v2/cmd/wails@$(go list -m github.com/wailsapp/wails/v2 | cut -d' ' -f2)
+
   app:build:
     desc: Build the production binary with VCS info embedded
+    deps: [wails:install]
     vars:
       REVISION:
         sh: git rev-parse --short HEAD
@@ -25,6 +35,7 @@ tasks:
 
   app:dev:
     desc: Start the application in development mode
+    deps: [wails:install]
     cmds:
       - wails dev
 
@@ -33,8 +44,17 @@ tasks:
     cmds:
       - go test ./...
 
+  golangci-lint:install:
+    desc: Install the pinned golangci-lint version when it is missing or outdated
+    internal: true
+    status:
+      - test "v$(golangci-lint version --short)" = "{{.GOLANGCI_LINT_VERSION}}"
+    cmds:
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+
   lint:
     desc: Run golangci-lint
+    deps: [golangci-lint:install]
     cmds:
       - golangci-lint run ./...
 

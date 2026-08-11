@@ -269,14 +269,22 @@ func ifaceIPs(iface *net.Interface) []net.IP {
 }
 
 func filterIPs(candidates []net.IP) []net.IP {
-	// 172.16.0.0/12 (RFC 1918 private range 172.16.0.0–172.31.255.255) is commonly used by Docker bridge networks and not routable across the LAN.
+	// Docker commonly uses this private range for bridge networks that are not routable across the LAN.
 	_, blockedNet, _ := net.ParseCIDR("172.16.0.0/12")
 
 	var ips []net.IP
 	for _, ip := range candidates {
-		if ip4 := ip.To4(); ip4 != nil && !blockedNet.Contains(ip4) {
-			ips = append(ips, ip4)
+		ip4 := ip.To4()
+		if ip4 == nil ||
+			ip4.IsLoopback() ||
+			ip4.IsUnspecified() ||
+			ip4.IsMulticast() ||
+			ip4.IsLinkLocalUnicast() ||
+			!ip4.IsGlobalUnicast() ||
+			blockedNet.Contains(ip4) {
+			continue
 		}
+		ips = append(ips, ip4)
 	}
 	return ips
 }

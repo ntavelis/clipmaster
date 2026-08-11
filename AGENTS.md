@@ -32,7 +32,7 @@ A Wails desktop clipboard manager that tracks clipboard history and syncs across
 
 ## Multi-Machine Sync (mDNS + HTTPS)
 
-- Each instance starts an HTTPS server on a random OS-assigned port
+- Each instance starts an HTTPS server on all IPv4 interfaces (`0.0.0.0`); the port is configurable and defaults to a random OS-assigned port
 - TLS: a CA cert is derived from the passphrase key bytes and used to sign a leaf cert; peers validate against this CA — no `InsecureSkipVerify`
 - mDNS advertises the port with TXT records: `version=1` and `ph=<first 16 hex chars of Argon2id passphrase hash>`
 - Peers filter by `ph=` — only instances sharing the same passphrase connect
@@ -93,7 +93,8 @@ All configurable via environment variables (`OMACLIP_<FLAG>`) or command-line ar
 | `OMACLIP_REMOTE_CLIPBOARDS_POLL_INTERVAL` | `2s` | Peer fetch frequency |
 | `OMACLIP_REMOTE_CLIPBOARDS_DISABLE` | `false` | Disable remote sync entirely |
 | `OMACLIP_PEERS_POLL_INTERVAL` | `2s` | mDNS browse frequency |
-| `OMACLIP_PEERS_MDNS_INTERFACE` | `` | Bind mDNS to a specific network interface (e.g. `wlan0`) |
+| `OMACLIP_PEERS_MDNS_INTERFACE` | `` | Bind mDNS discovery and advertisement to a specific network interface (e.g. `wlan0`) |
+| `OMACLIP_SYNC_SERVER_PORT` | `0` | Port the clipboard sync HTTPS server listens on; `0` uses an OS-assigned port |
 | `OMACLIP_THEME_COLOR_PATH` | `~/.config/omarchy/current/theme/colors.toml` | Omarchy theme file path |
 | `OMACLIP_CONFIG_PATH` | `~/.config/omaclip/config.json` | Config file path |
 

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-11
+
+### Added
+
+- Configurable sync HTTPS server port via `OMACLIP_SYNC_SERVER_PORT` / `--sync-server-port`; the server always listens on all IPv4 interfaces and defaults to an OS-assigned port
+
+### Changed
+
+- Upgraded the Wails framework and CLI from v2.12.0 to v2.14.0 across application dependencies, local tasks, and CI/release workflows
+- Updated direct and transitive Go dependencies to their latest compatible versions
+- Upgraded golangci-lint from v2.11.4 to v2.12.2 and pinned local lint tasks to the same version as CI
+- mDNS advertisement now filters out loopback, unspecified, multicast, link-local, non-global-unicast, IPv6, and Docker bridge-range addresses
+- Moved repository agent instructions to the tool-neutral `AGENTS.md` convention
+
 ## [0.6.1] - 2026-04-17
 
 ### Fixed
