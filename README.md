@@ -24,6 +24,7 @@ hot-reloading its color scheme the moment your OS theme changes.
   over HTTPS with certificate validation and a shared passphrase; only
   machines with the same passphrase can connect
 - Optional mDNS interface binding for multi-NIC setups
+- Manual peer configuration and fixed sync server port for VPN/routed networks
 
 ## Installation
 
@@ -111,9 +112,13 @@ share the same passphrase to discover and sync with each other.
 
 ### mDNS interface binding
 
-By default, mDNS peer discovery broadcasts on all network interfaces. On
-machines with multiple NICs (e.g. WiFi + Ethernet + VPN), you can bind to a
-specific interface:
+By default, mDNS peer discovery uses IPv4 multicast on all eligible network
+interfaces. On machines with multiple NICs (e.g. WiFi + Ethernet), it is
+recommended to set `--peers-mdns-interface` so both mDNS advertising and
+browsing use the intended local network interface.
+
+This is useful for local mDNS networks. VPNs such as Tailscale generally do not
+carry mDNS multicast between machines, so use manual peers for those setups.
 
 ```bash
 # CLI flag
@@ -128,6 +133,52 @@ Common interface names: `en0` (macOS WiFi), `wlan0` (Linux WiFi),
 
 To make it permanent, add the export to your shell profile (`~/.zshrc`,
 `~/.bashrc`, etc.).
+
+### Manual peers and fixed sync port
+
+By default, omaclip uses mDNS to discover peers on the local network and starts
+its sync HTTPS server on a random OS-assigned port. For VPN or routed networks
+such as Tailscale, mDNS may not cross network boundaries and the random port can
+change after restart. In that setup, run each machine with a fixed sync server
+port and manually list the other peers by Tailscale IPv4 address:
+
+```bash
+# On this machine, listen on a stable port and pull from davel over Tailscale
+omaclip --sync-server-port=36742 \
+  --peers-list=davel@100.101.102.103:36742
+```
+
+Use the same passphrase on every machine. The `name@` prefix is optional and is
+only used as the display name; the address must be an IP and port. To specify
+multiple peers, separate them with semicolons and quote the value in your shell:
+`--peers-list='davel@100.101.102.103:36742;alice@100.104.105.106:36742'`.
+When `--peers-list` is set, mDNS discovery is skipped entirely.
+
+Environment variable equivalent:
+
+```bash
+export OMACLIP_SYNC_SERVER_PORT=36742
+export OMACLIP_PEERS_LIST=davel@100.101.102.103:36742
+```
+
+Run this on every machine that should participate in the mesh. Each machine
+should use its own fixed `--sync-server-port` and list the other machines with
+their respective Tailscale IPs in `--peers-list`; once both sides point at each
+other, their clipboards sync between them.
+
+For example, on `alice`:
+
+```bash
+omaclip --sync-server-port=36742 \
+  --peers-list=davel@100.101.102.103:36742
+```
+
+And on `davel`:
+
+```bash
+omaclip --sync-server-port=36742 \
+  --peers-list=alice@100.104.105.106:36742
+```
 
 ## Live Development
 
