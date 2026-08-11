@@ -47,8 +47,7 @@ type appConfig struct {
 		List          []string      `conf:"help:manually specify peers [name@]ip:port (e.g. dell@192.168.1.53:36742 or 192.168.1.53:36742) will disable mDNS peer discovery if set"`
 	}
 	SyncServer struct {
-		IP   string `conf:"default:0.0.0.0,help:IP address the clipboard sync HTTPS server will listen on"`
-		Port int    `conf:"default:0,help:port the clipboard sync HTTPS server will listen on; zero uses an OS-assigned port"`
+		Port int `conf:"default:0,help:port the clipboard sync HTTPS server will listen on; zero uses an OS-assigned port"`
 	}
 	conf.Version
 }
@@ -102,7 +101,6 @@ func run() error {
 		PeersMDNSInterface:           cfg.Peers.MDNSInterface,
 		DisableRemoteClipboards:      cfg.RemoteClipboards.Disable,
 		ManualPeersList:              cfg.Peers.List,
-		SyncServerIP:                 cfg.SyncServer.IP,
 		SyncServerPort:               cfg.SyncServer.Port,
 	})
 

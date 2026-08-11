@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Configurable sync HTTPS server bind address via `OMACLIP_SYNC_SERVER_IP` / `--sync-server-ip` (default `0.0.0.0`) and `OMACLIP_SYNC_SERVER_PORT` / `--sync-server-port` (default `0` for an OS-assigned port)
+- Configurable sync HTTPS server port via `OMACLIP_SYNC_SERVER_PORT` / `--sync-server-port`; the server always listens on all IPv4 interfaces and defaults to an OS-assigned port
 
 ### Changed
 

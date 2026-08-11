@@ -40,7 +40,6 @@ type Config struct {
 	PeersMDNSInterface           string
 	DisableRemoteClipboards      bool
 	ManualPeersList              []string
-	SyncServerIP                 string
 	SyncServerPort               int
 }
 
@@ -245,7 +244,7 @@ func (a *App) startNetworking() error {
 	caPool := x509.NewCertPool()
 	caPool.AddCert(caCert)
 
-	a.syncServer = bsync.New(a.log, leafCert, a.cfg.SyncServerIP, a.cfg.SyncServerPort)
+	a.syncServer = bsync.New(a.log, leafCert, a.cfg.SyncServerPort)
 	registerRoutes(a.syncServer, &handlers.ClipboardHandler{
 		Monitor:         a.monitor,
 		MaxHistory:      a.cfg.RemoteClipboardsMaxHistory,

@@ -12,20 +12,19 @@ import (
 	"strconv"
 )
 
-// Server is a lightweight HTTPS server bound to a configured address.
+// Server is a lightweight HTTPS server bound to all IPv4 interfaces.
 type Server struct {
 	log      *slog.Logger
 	mux      *http.ServeMux
 	listener net.Listener
 	server   *http.Server
 	cert     tls.Certificate
-	ip       string
 	port     int
 }
 
 // New creates a Server. Register routes via Handle, then call Start.
-func New(log *slog.Logger, cert tls.Certificate, ip string, port int) *Server {
-	return &Server{log: log, mux: http.NewServeMux(), cert: cert, ip: ip, port: port}
+func New(log *slog.Logger, cert tls.Certificate, port int) *Server {
+	return &Server{log: log, mux: http.NewServeMux(), cert: cert, port: port}
 }
 
 // Handle registers a handler for the given pattern.
@@ -33,10 +32,10 @@ func (s *Server) Handle(pattern string, handler http.HandlerFunc) {
 	s.mux.HandleFunc(pattern, handler)
 }
 
-// Start binds to the configured address and begins serving in a goroutine.
+// Start binds to all IPv4 interfaces and begins serving in a goroutine.
 // A port of zero requests an OS-assigned port. Port is valid after Start succeeds.
 func (s *Server) Start() error {
-	ln, err := net.Listen("tcp", net.JoinHostPort(s.ip, strconv.Itoa(s.port)))
+	ln, err := net.Listen("tcp4", net.JoinHostPort("0.0.0.0", strconv.Itoa(s.port)))
 	if err != nil {
 		return fmt.Errorf("sync server: listen: %w", err)
 	}
