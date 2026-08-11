@@ -104,6 +104,59 @@ func TestFilterIPs(t *testing.T) {
 	}
 }
 
+func TestSelectPeerIPv4InSubnets(t *testing.T) {
+	_, lan, _ := net.ParseCIDR("192.168.1.0/24")
+
+	tests := []struct {
+		name       string
+		candidates []string
+		networks   []*net.IPNet
+		want       string
+	}{
+		{
+			name:       "selects address on interface network",
+			candidates: []string{"100.65.163.67", "192.168.1.20"},
+			networks:   []*net.IPNet{lan},
+			want:       "192.168.1.20",
+		},
+		{
+			name:       "rejects address outside interface network",
+			candidates: []string{"100.65.163.67"},
+			networks:   []*net.IPNet{lan},
+		},
+		{
+			name:       "allows first IPv4 address without interface restriction",
+			candidates: []string{"100.65.163.67", "192.168.1.20"},
+			want:       "100.65.163.67",
+		},
+		{
+			name:       "rejects all addresses when selected interface has no IPv4 network",
+			candidates: []string{"192.168.1.20"},
+			networks:   []*net.IPNet{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			candidates := make([]net.IP, 0, len(tt.candidates))
+			for _, candidate := range tt.candidates {
+				candidates = append(candidates, net.ParseIP(candidate))
+			}
+
+			got := selectPeerIPv4InSubnets(candidates, tt.networks)
+			if tt.want == "" {
+				if got != nil {
+					t.Fatalf("selectPeerIPv4InSubnets() = %q, want nil", got.String())
+				}
+				return
+			}
+			if got == nil || got.String() != tt.want {
+				t.Fatalf("selectPeerIPv4InSubnets() = %v, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLanIPs_ExcludesDockerSubnet(t *testing.T) {
 	host, _ := os.Hostname()
 	ips := lanIPs(host)

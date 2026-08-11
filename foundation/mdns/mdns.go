@@ -183,6 +183,7 @@ func (d *Discoverer) browse(ctx context.Context) {
 	}()
 
 	seen := make(map[string]Peer)
+	selectedSubnets := d.selectedInterfaceIPv4Subnets()
 	for entry := range entries {
 		name := entry.Instance
 		if d.myName != "" && name == d.myName {
@@ -194,13 +195,17 @@ func (d *Discoverer) browse(ctx context.Context) {
 			continue
 		}
 
-		if len(entry.AddrIPv4) == 0 {
+		peerIP := selectPeerIPv4InSubnets(entry.AddrIPv4, selectedSubnets)
+		if peerIP == nil {
+			if d.iface != nil {
+				d.log.Debug("mdns peer skipped: address outside selected interface", "name", name, "addresses", entry.AddrIPv4, "interface", d.iface.Name)
+			}
 			continue
 		}
 
 		seen[name] = Peer{
 			Name: name,
-			Addr: entry.AddrIPv4[0].String(),
+			Addr: peerIP.String(),
 			Port: entry.Port,
 		}
 	}
@@ -266,6 +271,47 @@ func ifaceIPs(iface *net.Interface) []net.IP {
 		}
 	}
 	return ips
+}
+
+func (d *Discoverer) selectedInterfaceIPv4Subnets() []*net.IPNet {
+	if d.iface == nil {
+		return nil
+	}
+
+	addrs, err := d.iface.Addrs()
+	if err != nil {
+		return []*net.IPNet{}
+	}
+
+	networks := make([]*net.IPNet, 0, len(addrs))
+	for _, addr := range addrs {
+		ipNet, ok := addr.(*net.IPNet)
+		if !ok || ipNet.IP.To4() == nil {
+			continue
+		}
+		networks = append(networks, ipNet)
+	}
+	return networks
+}
+
+// selectPeerIPv4InSubnets returns the first advertised IPv4 address in an allowed subnet.
+// A nil subnet list means no interface restriction is configured.
+func selectPeerIPv4InSubnets(candidates []net.IP, subnets []*net.IPNet) net.IP {
+	for _, ip := range candidates {
+		ip4 := ip.To4()
+		if ip4 == nil {
+			continue
+		}
+		if subnets == nil {
+			return ip4
+		}
+		for _, subnet := range subnets {
+			if subnet.Contains(ip4) {
+				return ip4
+			}
+		}
+	}
+	return nil
 }
 
 func filterIPs(candidates []net.IP) []net.IP {
