@@ -44,7 +44,11 @@ func TestServerStartRejectsUnavailablePort(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reserve port: %v", err)
 	}
-	defer listener.Close()
+	t.Cleanup(func() {
+		if err := listener.Close(); err != nil {
+			t.Errorf("close reserved port: %v", err)
+		}
+	})
 
 	port := listener.Addr().(*net.TCPAddr).Port
 	if err := newTestServer(port).Start(); err == nil {

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Upgraded the Wails framework and CLI from v2.12.0 to v2.14.0 across application dependencies, local tasks, and CI/release workflows
 - Updated direct and transitive Go dependencies to their latest compatible versions
+- Upgraded golangci-lint from v2.11.4 to v2.12.2 and pinned local lint tasks to the same version as CI
 - mDNS advertisement now filters out loopback, unspecified, multicast, link-local, non-global-unicast, IPv6, and Docker bridge-range addresses
 - Moved repository agent instructions to the tool-neutral `AGENTS.md` convention
 

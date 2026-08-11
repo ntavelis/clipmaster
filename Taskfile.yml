@@ -1,5 +1,8 @@
 version: "3"
 
+vars:
+  GOLANGCI_LINT_VERSION: v2.12.2
+
 tasks:
   default:
     cmds:
@@ -41,8 +44,17 @@ tasks:
     cmds:
       - go test ./...
 
+  golangci-lint:install:
+    desc: Install the pinned golangci-lint version when it is missing or outdated
+    internal: true
+    status:
+      - test "v$(golangci-lint version --short)" = "{{.GOLANGCI_LINT_VERSION}}"
+    cmds:
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+
   lint:
     desc: Run golangci-lint
+    deps: [golangci-lint:install]
     cmds:
       - golangci-lint run ./...
 
