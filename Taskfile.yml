@@ -1,8 +1,5 @@
 version: "3"
 
-vars:
-  WAILS_VERSION: v2.14.0
-
 tasks:
   default:
     cmds:
@@ -19,7 +16,7 @@ tasks:
     desc: Install the pinned Wails CLI version
     internal: true
     cmds:
-      - go install github.com/wailsapp/wails/v2/cmd/wails@{{.WAILS_VERSION}}
+      - go install github.com/wailsapp/wails/v2/cmd/wails@$(go list -m github.com/wailsapp/wails/v2 | cut -d' ' -f2)
 
   app:build:
     desc: Build the production binary with VCS info embedded
