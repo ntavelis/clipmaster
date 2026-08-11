@@ -1,5 +1,8 @@
 version: "3"
 
+vars:
+  WAILS_VERSION: v2.14.0
+
 tasks:
   default:
     cmds:
@@ -12,8 +15,15 @@ tasks:
     cmds:
       - npm run build
 
+  wails:install:
+    desc: Install the pinned Wails CLI version
+    internal: true
+    cmds:
+      - go install github.com/wailsapp/wails/v2/cmd/wails@{{.WAILS_VERSION}}
+
   app:build:
     desc: Build the production binary with VCS info embedded
+    deps: [wails:install]
     vars:
       REVISION:
         sh: git rev-parse --short HEAD
@@ -25,6 +35,7 @@ tasks:
 
   app:dev:
     desc: Start the application in development mode
+    deps: [wails:install]
     cmds:
       - wails dev
 

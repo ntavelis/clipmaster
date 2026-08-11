@@ -6,7 +6,7 @@ on:
       - "v*"
 
 env:
-  WAILS_VERSION: v2.12.0
+  WAILS_VERSION: v2.14.0
 
 jobs:
   build-linux-amd64:
