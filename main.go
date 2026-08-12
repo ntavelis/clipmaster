@@ -26,7 +26,7 @@ var assets embed.FS
 const appVersion = "0.7.0"
 
 type appConfig struct {
-	ThemeColorPath string `conf:"help:fullpath to the Omarchy theme colors.toml file (default: $HOME/.config/omarchy/current/theme/colors.toml)"`
+	ThemeColorPath string `conf:"help:full path to an Omarchy theme colors.toml file; when unset Omarchy 4 and 3 locations are detected automatically"`
 	ConfigPath     string `conf:"help:path to the omaclip config file (default: $HOME/.config/omaclip/config.json)"`
 	Debug          bool   `conf:"default:false,help:enable debug log level"`
 	Clipboard      struct {
@@ -61,8 +61,7 @@ func main() {
 
 func run() error {
 	cfg := appConfig{
-		ThemeColorPath: filepath.Join(os.Getenv("HOME"), ".config/omarchy/current/theme/colors.toml"),
-		ConfigPath:     filepath.Join(os.Getenv("HOME"), ".config/omaclip/config.json"),
+		ConfigPath: filepath.Join(os.Getenv("HOME"), ".config/omaclip/config.json"),
 	}
 	cfg.Build = vcs.Version(appVersion)
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/rhemvi/omaclip/app/handlers"
@@ -83,8 +84,8 @@ func (a *App) Startup(ctx context.Context) {
 	a.log.Info("clipboard backend selected", "backend", backend)
 	a.monitor = clipboard.NewMonitor(a.log, reader, writer, a.cfg.MaxHistory, a.cfg.MaxPngImageMB, a.cfg.MaxNonPngImageMB, a.cfg.PollInterval)
 
-	if areWeRunningInOmarchy(a.cfg.ThemeColorPath) {
-		colors, err := theme.Load(a.cfg.ThemeColorPath)
+	if themeColorPath, ok := areWeRunningInOmarchy(a.cfg.ThemeColorPath); ok {
+		colors, err := theme.Load(themeColorPath)
 		if err != nil {
 			a.log.Warn("could not load theme", "error", err)
 		} else {
@@ -92,7 +93,7 @@ func (a *App) Startup(ctx context.Context) {
 			runtime.EventsEmit(ctx, "theme:loaded", colors)
 		}
 
-		w := theme.NewWatcher(a.cfg.ThemeColorPath, func(c theme.ThemeColors) {
+		w := theme.NewWatcher(themeColorPath, func(c theme.ThemeColors) {
 			a.colors = c
 			runtime.EventsEmit(ctx, "theme:loaded", c)
 		})
@@ -290,7 +291,25 @@ func (a *App) startNetworking() error {
 	return nil
 }
 
-func areWeRunningInOmarchy(themeColorPath string) bool {
-	_, err := os.Stat(themeColorPath)
-	return err == nil
+func areWeRunningInOmarchy(configuredPath string) (string, bool) {
+	if configuredPath != "" {
+		_, err := os.Stat(configuredPath)
+		return configuredPath, err == nil
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", false
+	}
+
+	paths := []string{
+		filepath.Join(home, ".local/state/omarchy/current/theme/colors.toml"),
+		filepath.Join(home, ".config/omarchy/current/theme/colors.toml"),
+	}
+	for _, path := range paths {
+		if _, err := os.Stat(path); err == nil {
+			return path, true
+		}
+	}
+	return "", false
 }

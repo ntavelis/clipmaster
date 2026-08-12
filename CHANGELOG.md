@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Added automatic Omarchy 4 theme discovery and semantic color schema support while retaining Omarchy 3 compatibility and explicit theme path overrides.
 - Expanded README networking configuration docs with mDNS interface binding recommendations and manual peer examples for Tailscale/VPN mesh sync.
 
 ## [0.7.0] - 2026-08-11
