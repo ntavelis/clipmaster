@@ -47,4 +47,3 @@ require (
 	golang.org/x/tools v0.48.0 // indirect
 )
 
-// replace github.com/wailsapp/wails/v2 v2.14.0 => /home/antavelis/go/pkg/mod
