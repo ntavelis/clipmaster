@@ -28,8 +28,6 @@ import (
 
 var (
 	ErrSpecifiedThemeFileNotFound = errors.New("specified Omarchy theme config file was not found")
-	ErrOmarchy4ThemeFileNotFound  = errors.New("omarchy 4 theme config file could not be accessed")
-	ErrOmarchy3ThemeFileNotFound  = errors.New("omarchy 3 theme config file could not be accessed")
 	ErrDefaultThemeFilesNotFound  = errors.New("no config file was found in the default Omarchy 3 and 4 locations")
 )
 

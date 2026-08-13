@@ -18,8 +18,8 @@ hot-reloading its color scheme the moment your OS theme changes.
 - Expandable entries for viewing long text or larger image previews
 - Image file copy support: copying an image file from a file manager
   (Finder, Nautilus, etc.) captures the actual image, not just the filename
-- Live Omarchy theme support, colors update automatically when you switch
-  themes
+- Live theme loading for Omarchy 3 and 4; colors update automatically when you
+  switch themes
 - Secure multi-machine sync, peers discover each other via mDNS and sync
   over HTTPS with certificate validation and a shared passphrase; only
   machines with the same passphrase can connect
