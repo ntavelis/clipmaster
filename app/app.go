@@ -26,6 +26,13 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+var (
+	ErrSpecifiedThemeFileNotFound = errors.New("specified Omarchy theme config file was not found")
+	ErrOmarchy4ThemeFileNotFound  = errors.New("omarchy 4 theme config file could not be accessed")
+	ErrOmarchy3ThemeFileNotFound  = errors.New("omarchy 3 theme config file could not be accessed")
+	ErrDefaultThemeFilesNotFound  = errors.New("no config file was found in the default Omarchy 3 and 4 locations")
+)
+
 // Config holds all configurable values for the application.
 type Config struct {
 	MaxHistory                   int
@@ -84,7 +91,8 @@ func (a *App) Startup(ctx context.Context) {
 	a.log.Info("clipboard backend selected", "backend", backend)
 	a.monitor = clipboard.NewMonitor(a.log, reader, writer, a.cfg.MaxHistory, a.cfg.MaxPngImageMB, a.cfg.MaxNonPngImageMB, a.cfg.PollInterval)
 
-	if themeColorPath, ok := areWeRunningInOmarchy(a.cfg.ThemeColorPath); ok {
+	themeColorPath, err := areWeRunningInOmarchy(a.cfg.ThemeColorPath)
+	if err == nil {
 		colors, err := theme.Load(themeColorPath)
 		if err != nil {
 			a.log.Warn("could not load theme", "error", err)
@@ -100,6 +108,11 @@ func (a *App) Startup(ctx context.Context) {
 		if err := w.Start(ctx); err != nil {
 			a.log.Warn("could not watch theme file", "error", err)
 		}
+	} else {
+		a.log.Warn(
+			"no usable Omarchy theme file was found; using the built-in Tokyo Night theme and disabling the theme watcher",
+			"error", err,
+		)
 	}
 
 	if err := validatePassphraseFromConfig(a.cfg.ConfigPath, a.passphraseStore); err != nil {
@@ -291,15 +304,17 @@ func (a *App) startNetworking() error {
 	return nil
 }
 
-func areWeRunningInOmarchy(configuredPath string) (string, bool) {
+func areWeRunningInOmarchy(configuredPath string) (string, error) {
 	if configuredPath != "" {
-		_, err := os.Stat(configuredPath)
-		return configuredPath, err == nil
+		if _, err := os.Stat(configuredPath); err != nil {
+			return "", fmt.Errorf("%w: %q: %w", ErrSpecifiedThemeFileNotFound, configuredPath, err)
+		}
+		return configuredPath, nil
 	}
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", false
+		return "", fmt.Errorf("resolve home directory for Omarchy theme discovery: %w", err)
 	}
 
 	paths := []string{
@@ -308,8 +323,8 @@ func areWeRunningInOmarchy(configuredPath string) (string, bool) {
 	}
 	for _, path := range paths {
 		if _, err := os.Stat(path); err == nil {
-			return path, true
+			return path, nil
 		}
 	}
-	return "", false
+	return "", ErrDefaultThemeFilesNotFound
 }

@@ -1,6 +1,7 @@
 package theme
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -61,6 +62,31 @@ bright_magenta = "bright-magenta"
 	}
 	if colors.Color1 != "red" || colors.Color10 != "bright-green" || colors.Color15 != "bright-foreground" {
 		t.Fatalf("unexpected Omarchy 4 ANSI conversion: %+v", colors)
+	}
+}
+
+func TestLoadErrors(t *testing.T) {
+	tests := []struct {
+		name     string
+		contents string
+		want     error
+	}{
+		{name: "Omarchy 4", contents: "mode = \"dark\"\naccent = 1", want: ErrCouldNotLoadOmarchy4File},
+		{name: "Omarchy 3", contents: "accent = 1", want: ErrCouldNotLoadOmarchy3File},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Load(writeThemeFile(t, tt.contents))
+			if !errors.Is(err, tt.want) {
+				t.Fatalf("expected %v, got %v", tt.want, err)
+			}
+		})
+	}
+
+	_, err := Load(filepath.Join(t.TempDir(), "missing.toml"))
+	if !errors.Is(err, ErrThemeFileNotFound) {
+		t.Fatalf("expected %v, got %v", ErrThemeFileNotFound, err)
 	}
 }
 

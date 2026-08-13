@@ -2,9 +2,17 @@
 package theme
 
 import (
+	"errors"
+	"fmt"
 	"os"
 
 	"github.com/pelletier/go-toml/v2"
+)
+
+var (
+	ErrThemeFileNotFound        = errors.New("theme file not found")
+	ErrCouldNotLoadOmarchy4File = errors.New("could not load Omarchy 4 file")
+	ErrCouldNotLoadOmarchy3File = errors.New("could not load Omarchy 3 file")
 )
 
 // ThemeColors is the version-independent color set exposed to the frontend.
@@ -93,41 +101,37 @@ type Omarchy4Colors struct {
 func Load(path string) (ThemeColors, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return ThemeColors{}, err
+		return ThemeColors{}, fmt.Errorf("%w: %w", ErrThemeFileNotFound, err)
 	}
 
-	var schema struct {
-		Mode string `toml:"mode"`
-	}
-	if err := toml.Unmarshal(data, &schema); err != nil {
-		return ThemeColors{}, err
-	}
-
-	if schema.Mode != "" {
+	if areWeInOmarchy4CompatibleColorsFile(data) {
 		var colors Omarchy4Colors
 		if err := toml.Unmarshal(data, &colors); err != nil {
-			return ThemeColors{}, err
+			return ThemeColors{}, fmt.Errorf("%w: %w", ErrCouldNotLoadOmarchy4File, err)
 		}
 		return colors.ThemeColors(), nil
 	}
 
 	var colors Omarchy3Colors
 	if err := toml.Unmarshal(data, &colors); err != nil {
-		return ThemeColors{}, err
+		return ThemeColors{}, fmt.Errorf("%w: %w", ErrCouldNotLoadOmarchy3File, err)
 	}
 	return colors.ThemeColors(), nil
 }
 
+func areWeInOmarchy4CompatibleColorsFile(data []byte) bool {
+	var schema struct {
+		Mode string `toml:"mode"`
+	}
+	if err := toml.Unmarshal(data, &schema); err != nil {
+		return false
+	}
+	return schema.Mode != ""
+}
+
 // ThemeColors converts Omarchy 3 colors to the common frontend representation.
 func (c Omarchy3Colors) ThemeColors() ThemeColors {
-	return ThemeColors{
-		Background: c.Background, Foreground: c.Foreground, Accent: c.Accent, Cursor: c.Cursor,
-		SelectionBackground: c.SelectionBackground, SelectionForeground: c.SelectionForeground,
-		Color0: c.Color0, Color1: c.Color1, Color2: c.Color2, Color3: c.Color3,
-		Color4: c.Color4, Color5: c.Color5, Color6: c.Color6, Color7: c.Color7,
-		Color8: c.Color8, Color9: c.Color9, Color10: c.Color10, Color11: c.Color11,
-		Color12: c.Color12, Color13: c.Color13, Color14: c.Color14, Color15: c.Color15,
-	}
+	return ThemeColors(c)
 }
 
 // ThemeColors maps Omarchy 4 semantic colors onto the common frontend representation.
