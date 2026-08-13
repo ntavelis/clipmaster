@@ -132,7 +132,12 @@ func (d *Discoverer) Register(port int) error {
 
 	d.bindings = bindings
 	d.servers = servers
-	d.log.Info("mdns registered", "instance", instanceName, "port", port, "interfaces", bindingLogValues(bindings))
+	d.log.Info(
+		"mdns registered",
+		"instance", instanceName,
+		"port", port,
+		"interfaces", formatBindings(bindings),
+	)
 	return nil
 }
 
@@ -380,16 +385,16 @@ func shutdownServers(servers []*mdns.Server) {
 	}
 }
 
-func bindingLogValues(bindings []interfaceBinding) []any {
-	values := make([]any, 0, len(bindings))
-	for _, binding := range bindings {
+func formatBindings(bindings []interfaceBinding) string {
+	values := make([]string, len(bindings))
+	for i, binding := range bindings {
 		ips := make([]string, len(binding.ips))
-		for i, ip := range binding.ips {
-			ips[i] = ip.String()
+		for j, ip := range binding.ips {
+			ips[j] = ip.String()
 		}
-		values = append(values, map[string]any{"name": binding.iface.Name, "ips": ips})
+		values[i] = fmt.Sprintf("%s[%s]", binding.iface.Name, strings.Join(ips, ","))
 	}
-	return values
+	return strings.Join(values, ",")
 }
 
 func (d *Discoverer) peerMatchesPassphrase(infoFields []string) bool {
