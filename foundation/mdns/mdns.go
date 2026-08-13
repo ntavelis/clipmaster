@@ -24,9 +24,10 @@ const (
 )
 
 var (
-	ErrNoDiscoverableIPs   = fmt.Errorf("mdns: no discoverable IPs, skipping registering to the network")
-	ErrInterfaceNotFound   = fmt.Errorf("mdns: requested network interface not found")
-	ErrServiceRegistration = fmt.Errorf("mdns: failed to register service")
+	ErrNoDiscoverableIPs            = fmt.Errorf("mdns: no discoverable IPs, skipping registering to the network")
+	ErrInterfaceNotFound            = fmt.Errorf("mdns: requested network interface not found")
+	ErrServiceRegistration          = fmt.Errorf("mdns: failed to register service")
+	ErrInterfacesCouldNotBeResolved = fmt.Errorf("mdns: could not resolve any network interfaces")
 )
 
 // Peer describes a discovered remote Omaclip instance.
@@ -303,18 +304,18 @@ func lanIPs(hostname string) []net.IP {
 	return filterIPs(resolved)
 }
 
-func getInterfaceBindings(selected *net.Interface) ([]interfaceBinding, error) {
-	if selected != nil {
-		ips := ifaceIPs(selected)
+func getInterfaceBindings(userSelectedNetworkInterface *net.Interface) ([]interfaceBinding, error) {
+	if userSelectedNetworkInterface != nil {
+		ips := ifaceIPs(userSelectedNetworkInterface)
 		if len(ips) == 0 {
 			return nil, ErrNoDiscoverableIPs
 		}
-		return []interfaceBinding{{iface: selected, ips: ips}}, nil
+		return []interfaceBinding{{iface: userSelectedNetworkInterface, ips: ips}}, nil
 	}
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return nil, fmt.Errorf("mdns: listing network interfaces: %w", err)
+		return nil, ErrInterfacesCouldNotBeResolved
 	}
 
 	bindings := make([]interfaceBinding, 0, len(ifaces))
