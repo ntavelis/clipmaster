@@ -2,7 +2,6 @@ package mdns
 
 import (
 	"context"
-	"errors"
 	"io"
 	"log/slog"
 	"net"
@@ -156,9 +155,6 @@ func TestNew(t *testing.T) {
 	if d.peers == nil {
 		t.Error("peers map not initialized")
 	}
-	if d.resolveBindings == nil {
-		t.Error("binding resolver not initialized")
-	}
 }
 
 func TestNew_InvalidInterface(t *testing.T) {
@@ -191,18 +187,13 @@ func TestShutdown_NilServer(t *testing.T) {
 	d.Shutdown()
 }
 
-func TestRegister_NoDiscoverableIps(t *testing.T) {
-	d1, err := New(discardLog, 100*time.Millisecond, "host", &passphrase.Store{}, "")
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
-	d1.resolveBindings = func(*net.Interface) ([]interfaceBinding, error) {
-		return nil, ErrNoDiscoverableIPs
-	}
-
-	err = d1.Register(19901)
-	if !errors.Is(err, ErrNoDiscoverableIPs) {
+func TestGetInterfaceBindings_NoDiscoverableIPs(t *testing.T) {
+	bindings, err := getInterfaceBindings(&net.Interface{Name: "no-addresses"})
+	if err != ErrNoDiscoverableIPs {
 		t.Errorf("expected ErrNoDiscoverableIPs, got %v", err)
+	}
+	if bindings != nil {
+		t.Errorf("expected no bindings, got %v", bindings)
 	}
 }
 

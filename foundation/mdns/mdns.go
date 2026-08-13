@@ -52,7 +52,6 @@ type Discoverer struct {
 	browsePeriod    time.Duration
 	passphraseStore *passphrase.Store
 	iface           *net.Interface
-	resolveBindings func(*net.Interface) ([]interfaceBinding, error)
 
 	mu       sync.RWMutex
 	peers    map[string]Peer
@@ -76,7 +75,6 @@ func New(
 		lastSeen:        make(map[string]int),
 		hostname:        hostname,
 		passphraseStore: ps,
-		resolveBindings: getInterfaceBindings,
 	}
 
 	if ifaceName != "" {
@@ -95,7 +93,7 @@ func (d *Discoverer) Register(port int) error {
 	instanceName := fmt.Sprintf("%s-%d", d.hostname, port)
 	d.myName = instanceName
 
-	bindings, err := d.resolveBindings(d.iface)
+	bindings, err := getInterfaceBindings(d.iface)
 	if err != nil {
 		return err
 	}
