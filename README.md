@@ -1,13 +1,11 @@
 # Omaclip
 
-A desktop clipboard manager for Omarchy, works in Linux and macOS. It tracks your
-clipboard's history, lets you browse and copy items and is designed for a
-keyboard-first workflow.
+A desktop clipboard manager for Omarchy that works on Linux and macOS. It tracks
+your clipboard history, lets you browse and copy items, and is designed for a
+keyboard-first workflow. Run it on multiple machines and they form a secure mesh,
+automatically discovering each other and sharing their clipboards.
 
 <https://github.com/user-attachments/assets/434b6ff6-21e1-459b-833f-7f63c5a9ee88>
-
-When you run it on multiple machines peers will form a secure mesh, where they will auto-discover
-each other on the local network and share their clipboards.
 
 It works on Linux and macOS, but it loves [Omarchy](https://omarchy.org),
 hot-reloading its color scheme the moment your OS theme changes.
