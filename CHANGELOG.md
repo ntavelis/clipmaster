@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Expanded README networking configuration docs with mDNS interface binding recommendations and manual peer examples for Tailscale/VPN mesh sync.
+- Replaced `grandcat/zeroconf` with the actively maintained `hashicorp/mdns` package to improve long-term maintainability and mDNS stability; registration and discovery now run per eligible IPv4 interface and aggregate each browse cycle before expiring peers.
+- Updated Vue, Pinia, Vite, Tailwind CSS, and their frontend integrations to the latest releases; the updated dependency graph has no known npm vulnerabilities.
 
 ## [0.7.0] - 2026-08-11
 

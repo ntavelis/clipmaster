@@ -2,7 +2,6 @@ package mdns
 
 import (
 	"context"
-	"errors"
 	"io"
 	"log/slog"
 	"net"
@@ -10,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/mdns"
 	"github.com/rhemvi/omaclip/business/passphrase"
 )
 
@@ -187,16 +187,91 @@ func TestShutdown_NilServer(t *testing.T) {
 	d.Shutdown()
 }
 
-func TestRegister_NoDiscoverableIps(t *testing.T) {
-	// give invalid host to force no discoverable ips
-	d1, err := New(discardLog, 100*time.Millisecond, "invalid", &passphrase.Store{}, "")
+func TestGetInterfaceBindings_NoDiscoverableIPs(t *testing.T) {
+	bindings, err := getInterfaceBindings(&net.Interface{Name: "no-addresses"})
+	if err != ErrNoDiscoverableIPs {
+		t.Errorf("expected ErrNoDiscoverableIPs, got %v", err)
+	}
+	if bindings != nil {
+		t.Errorf("expected no bindings, got %v", bindings)
+	}
+}
+
+func TestNormalizeInstanceName(t *testing.T) {
+	tests := map[string]string{
+		"host-19901._omaclip._tcp.local.": "host-19901",
+		"host-19901.":                     "host-19901",
+		"host-19901":                      "host-19901",
+	}
+
+	for input, want := range tests {
+		if got := normalizeInstanceName(input); got != want {
+			t.Errorf("normalizeInstanceName(%q) = %q, want %q", input, got, want)
+		}
+	}
+}
+
+func TestPeerFromServiceEntry(t *testing.T) {
+	ps := &passphrase.Store{}
+	ps.Set("testpass")
+	d, err := New(discardLog, time.Second, "host", ps, "")
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	d.myName = "host-19901"
+
+	valid := &mdns.ServiceEntry{
+		Name:       "peer-19902._omaclip._tcp.local.",
+		AddrV4:     net.ParseIP("192.168.1.20"),
+		Port:       19902,
+		InfoFields: []string{"version=1", "ph=" + ps.ShortHash()},
+	}
+	peer, ok := d.peerFromServiceEntry(valid)
+	if !ok {
+		t.Fatal("valid service entry was rejected")
+	}
+	if peer != (Peer{Name: "peer-19902", Addr: "192.168.1.20", Port: 19902}) {
+		t.Fatalf("peer = %+v", peer)
+	}
+
+	tests := []struct {
+		name  string
+		entry *mdns.ServiceEntry
+	}{
+		{name: "nil entry", entry: nil},
+		{name: "missing IPv4", entry: &mdns.ServiceEntry{Name: valid.Name, Port: valid.Port, InfoFields: valid.InfoFields}},
+		{name: "missing port", entry: &mdns.ServiceEntry{Name: valid.Name, AddrV4: valid.AddrV4, InfoFields: valid.InfoFields}},
+		{name: "self", entry: &mdns.ServiceEntry{Name: "host-19901._omaclip._tcp.local.", AddrV4: valid.AddrV4, Port: valid.Port, InfoFields: valid.InfoFields}},
+		{name: "passphrase mismatch", entry: &mdns.ServiceEntry{Name: valid.Name, AddrV4: valid.AddrV4, Port: valid.Port, InfoFields: []string{"ph=wrong"}}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, ok := d.peerFromServiceEntry(tt.entry); ok {
+				t.Error("entry was accepted")
+			}
+		})
+	}
+}
+
+func TestReconcilePeers_ExpiresAfterThreeMissedCycles(t *testing.T) {
+	d, err := New(discardLog, time.Second, "host", &passphrase.Store{}, "")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
 
-	err = d1.Register(19901)
-	if !errors.Is(err, ErrNoDiscoverableIPs) {
-		t.Errorf("expected ErrNoDiscoverableIPs, got %v", err)
+	peer := Peer{Name: "peer", Addr: "192.168.1.20", Port: 19902}
+	d.reconcilePeers(map[string]Peer{peer.Name: peer})
+	for cycle := 1; cycle < peerTTLCycles; cycle++ {
+		d.reconcilePeers(nil)
+		if len(d.Peers()) != 1 {
+			t.Fatalf("peer expired after %d missed cycles", cycle)
+		}
+	}
+
+	d.reconcilePeers(nil)
+	if len(d.Peers()) != 0 {
+		t.Fatal("peer did not expire after the TTL")
 	}
 }
 

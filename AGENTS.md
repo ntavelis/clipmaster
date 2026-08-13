@@ -9,7 +9,7 @@ A Wails desktop clipboard manager that tracks clipboard history and syncs across
 - **Backend**: Go (Wails v2)
 - **Frontend**: Vue 3 + Vite + Pinia
 - **CSS**: TailwindCSS only — no other CSS frameworks, no custom CSS classes outside of Tailwind utilities
-- **Peer Discovery**: mDNS via `grandcat/zeroconf` (`_omaclip._tcp` service type)
+- **Peer Discovery**: mDNS via `hashicorp/mdns` (`_omaclip._tcp` service type)
 - **Sync Transport**: HTTPS with TLS — a CA cert is derived from the passphrase and used to sign a leaf cert; peers validate against this CA (no `InsecureSkipVerify`)
 
 ## Features
