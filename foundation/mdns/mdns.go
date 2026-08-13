@@ -1,10 +1,12 @@
-// Package mdns wraps github.com/grandcat/zeroconf to advertise and discover
+// Package mdns wraps github.com/hashicorp/mdns to advertise and discover
 // Omaclip instances on the local network.
 package mdns
 
 import (
 	"context"
 	"fmt"
+	"io"
+	"log"
 	"log/slog"
 	"net"
 	"strings"
@@ -13,7 +15,7 @@ import (
 
 	"github.com/rhemvi/omaclip/business/passphrase"
 
-	"github.com/grandcat/zeroconf"
+	"github.com/hashicorp/mdns"
 )
 
 const (
@@ -36,14 +38,21 @@ type Peer struct {
 
 const peerTTLCycles = 3
 
+type interfaceBinding struct {
+	iface *net.Interface
+	ips   []net.IP
+}
+
 // Discoverer registers this instance via mDNS and continuously browses for peers.
 type Discoverer struct {
 	log             *slog.Logger
-	server          *zeroconf.Server
+	servers         []*mdns.Server
+	bindings        []interfaceBinding
 	myName          string
 	browsePeriod    time.Duration
 	passphraseStore *passphrase.Store
 	iface           *net.Interface
+	resolveBindings func(*net.Interface) ([]interfaceBinding, error)
 
 	mu       sync.RWMutex
 	peers    map[string]Peer
@@ -67,6 +76,7 @@ func New(
 		lastSeen:        make(map[string]int),
 		hostname:        hostname,
 		passphraseStore: ps,
+		resolveBindings: getInterfaceBindings,
 	}
 
 	if ifaceName != "" {
@@ -85,39 +95,44 @@ func (d *Discoverer) Register(port int) error {
 	instanceName := fmt.Sprintf("%s-%d", d.hostname, port)
 	d.myName = instanceName
 
-	ips, err := getIPs(d)
+	bindings, err := d.resolveBindings(d.iface)
 	if err != nil {
 		return err
 	}
 
 	txt := []string{"version=1", "ph=" + d.passphraseStore.ShortHash()}
+	servers := make([]*mdns.Server, 0, len(bindings))
+	for _, binding := range bindings {
+		hostName := instanceName + "." + domain
+		service, err := mdns.NewMDNSService(
+			instanceName,
+			serviceType,
+			domain,
+			hostName,
+			port,
+			binding.ips,
+			txt,
+		)
+		if err != nil {
+			shutdownServers(servers)
+			return fmt.Errorf("%w: creating service: %v", ErrServiceRegistration, err)
+		}
 
-	ipStrs := make([]string, len(ips))
-	for i, ip := range ips {
-		ipStrs[i] = ip.String()
+		server, err := mdns.NewServer(&mdns.Config{
+			Zone:   service,
+			Iface:  binding.iface,
+			Logger: log.New(io.Discard, "", 0),
+		})
+		if err != nil {
+			shutdownServers(servers)
+			return fmt.Errorf("%w: starting server on %s: %v", ErrServiceRegistration, binding.iface.Name, err)
+		}
+		servers = append(servers, server)
 	}
 
-	var ifaces []net.Interface
-	if d.iface != nil {
-		ifaces = []net.Interface{*d.iface}
-	}
-
-	srv, err := zeroconf.RegisterProxy(
-		instanceName,
-		serviceType,
-		domain,
-		port,
-		instanceName,
-		ipStrs,
-		txt,
-		ifaces,
-	)
-	if err != nil {
-		return fmt.Errorf("%w: %v", ErrServiceRegistration, err)
-	}
-
-	d.server = srv
-	d.log.Info("mdns registered", "instance", instanceName, "port", port, "ips", ipStrs)
+	d.bindings = bindings
+	d.servers = servers
+	d.log.Info("mdns registered", "instance", instanceName, "port", port, "interfaces", bindingLogValues(bindings))
 	return nil
 }
 
@@ -139,8 +154,10 @@ func (d *Discoverer) Peers() []Peer {
 
 // Shutdown tears down the mDNS server.
 func (d *Discoverer) Shutdown() {
-	if d.server != nil {
-		d.server.Shutdown()
+	for _, server := range d.servers {
+		if err := server.Shutdown(); err != nil {
+			d.log.Warn("mdns shutdown failed", "error", err)
+		}
 	}
 }
 
@@ -159,53 +176,106 @@ func (d *Discoverer) browseLoop(ctx context.Context) {
 }
 
 func (d *Discoverer) browse(ctx context.Context) {
-	var opts []zeroconf.ClientOption
-	if d.iface != nil {
-		opts = append(opts, zeroconf.SelectIfaces([]net.Interface{*d.iface}))
-	}
-	opts = append(opts, zeroconf.SelectIPTraffic(zeroconf.IPv4))
-
-	resolver, err := zeroconf.NewResolver(opts...)
-	if err != nil {
-		d.log.Warn("mdns browse failed", "error", err)
+	if len(d.bindings) == 0 {
 		return
 	}
-
-	entries := make(chan *zeroconf.ServiceEntry, 16)
 
 	browseCtx, cancel := context.WithTimeout(ctx, d.browsePeriod)
 	defer cancel()
 
-	go func() {
-		if err := resolver.Browse(browseCtx, serviceType, domain, entries); err != nil {
-			d.log.Warn("mdns browse failed", "error", err)
-		}
-	}()
+	type queryResult struct {
+		index int
+		peers map[string]Peer
+		err   error
+	}
 
-	seen := make(map[string]Peer)
-	for entry := range entries {
-		name := entry.Instance
-		if d.myName != "" && name == d.myName {
-			continue
-		}
+	results := make(chan queryResult, len(d.bindings))
+	for i, binding := range d.bindings {
+		go func(index int, binding interfaceBinding) {
+			peers, err := d.queryBinding(browseCtx, binding)
+			results <- queryResult{index: index, peers: peers, err: err}
+		}(i, binding)
+	}
 
-		if !d.peerMatchesPassphrase(entry.Text) {
-			d.log.Debug("mdns peer skipped: passphrase mismatch", "name", name)
-			continue
-		}
-
-		if len(entry.AddrIPv4) == 0 {
-			continue
-		}
-
-		seen[name] = Peer{
-			Name: name,
-			Addr: entry.AddrIPv4[0].String(),
-			Port: entry.Port,
+	byBinding := make([]map[string]Peer, len(d.bindings))
+	for range d.bindings {
+		result := <-results
+		byBinding[result.index] = result.peers
+		if result.err != nil && browseCtx.Err() == nil {
+			d.log.Warn("mdns browse failed", "interface", d.bindings[result.index].iface.Name, "error", result.err)
 		}
 	}
 
+	seen := make(map[string]Peer)
+	for _, peers := range byBinding {
+		for name, peer := range peers {
+			if _, exists := seen[name]; !exists {
+				seen[name] = peer
+			}
+		}
+	}
+	d.reconcilePeers(seen)
+
+	for _, p := range seen {
+		d.log.Debug("mdns peer discovered", "name", p.Name, "addr", p.Addr, "port", p.Port)
+	}
+}
+
+func (d *Discoverer) queryBinding(ctx context.Context, binding interfaceBinding) (map[string]Peer, error) {
+	entries := make(chan *mdns.ServiceEntry, 256)
+	params := mdns.DefaultParams(serviceType)
+	params.Domain = domain
+	params.Timeout = d.browsePeriod
+	params.Interface = binding.iface
+	params.Entries = entries
+	params.DisableIPv6 = true
+	params.Logger = log.New(io.Discard, "", 0)
+
+	err := mdns.QueryContext(ctx, params)
+	close(entries)
+
+	seen := make(map[string]Peer)
+	for entry := range entries {
+		peer, ok := d.peerFromServiceEntry(entry)
+		if !ok {
+			continue
+		}
+		seen[peer.Name] = peer
+	}
+
+	return seen, err
+}
+
+func (d *Discoverer) peerFromServiceEntry(entry *mdns.ServiceEntry) (Peer, bool) {
+	if entry == nil || entry.AddrV4 == nil || entry.Port <= 0 {
+		return Peer{}, false
+	}
+
+	name := normalizeInstanceName(entry.Name)
+	if name == "" || d.myName != "" && name == d.myName {
+		return Peer{}, false
+	}
+
+	if !d.peerMatchesPassphrase(entry.InfoFields) {
+		d.log.Debug("mdns peer skipped: passphrase mismatch", "name", name)
+		return Peer{}, false
+	}
+
+	return Peer{Name: name, Addr: entry.AddrV4.String(), Port: entry.Port}, true
+}
+
+func normalizeInstanceName(name string) string {
+	suffix := "." + strings.TrimSuffix(serviceType, ".") + "." + strings.TrimSuffix(domain, ".") + "."
+	if instance, ok := strings.CutSuffix(name, suffix); ok {
+		return instance
+	}
+	return strings.TrimSuffix(name, ".")
+}
+
+func (d *Discoverer) reconcilePeers(seen map[string]Peer) {
 	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	for name, peer := range seen {
 		d.peers[name] = peer
 		d.lastSeen[name] = 0
@@ -219,11 +289,6 @@ func (d *Discoverer) browse(ctx context.Context) {
 			}
 		}
 	}
-	d.mu.Unlock()
-
-	for _, p := range seen {
-		d.log.Debug("mdns peer discovered", "name", p.Name, "addr", p.Addr, "port", p.Port)
-	}
 }
 
 func lanIPs(hostname string) []net.IP {
@@ -235,17 +300,37 @@ func lanIPs(hostname string) []net.IP {
 	return filterIPs(resolved)
 }
 
-func getIPs(d *Discoverer) ([]net.IP, error) {
-	var ips []net.IP
-	if d.iface != nil {
-		ips = ifaceIPs(d.iface)
-	} else {
-		ips = lanIPs(d.hostname)
+func getInterfaceBindings(selected *net.Interface) ([]interfaceBinding, error) {
+	if selected != nil {
+		ips := ifaceIPs(selected)
+		if len(ips) == 0 {
+			return nil, ErrNoDiscoverableIPs
+		}
+		return []interfaceBinding{{iface: selected, ips: ips}}, nil
 	}
-	if ips == nil {
+
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, fmt.Errorf("mdns: listing network interfaces: %w", err)
+	}
+
+	bindings := make([]interfaceBinding, 0, len(ifaces))
+	for i := range ifaces {
+		iface := &ifaces[i]
+		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 || iface.Flags&net.FlagMulticast == 0 {
+			continue
+		}
+		ips := filterIPs(ifaceIPs(iface))
+		if len(ips) == 0 {
+			continue
+		}
+		bindings = append(bindings, interfaceBinding{iface: iface, ips: ips})
+	}
+
+	if len(bindings) == 0 {
 		return nil, ErrNoDiscoverableIPs
 	}
-	return ips, nil
+	return bindings, nil
 }
 
 // ifaceIPs returns the IPv4 addresses assigned to a specific network interface.
@@ -287,6 +372,24 @@ func filterIPs(candidates []net.IP) []net.IP {
 		ips = append(ips, ip4)
 	}
 	return ips
+}
+
+func shutdownServers(servers []*mdns.Server) {
+	for _, server := range servers {
+		_ = server.Shutdown()
+	}
+}
+
+func bindingLogValues(bindings []interfaceBinding) []any {
+	values := make([]any, 0, len(bindings))
+	for _, binding := range bindings {
+		ips := make([]string, len(binding.ips))
+		for i, ip := range binding.ips {
+			ips[i] = ip.String()
+		}
+		values = append(values, map[string]any{"name": binding.iface.Name, "ips": ips})
+	}
+	return values
 }
 
 func (d *Discoverer) peerMatchesPassphrase(infoFields []string) bool {
