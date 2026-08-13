@@ -139,7 +139,7 @@ func (c Omarchy4Colors) ThemeColors() ThemeColors {
 	return ThemeColors{
 		Background: c.Background, Foreground: c.Foreground, Accent: c.Accent,
 		Cursor: c.BrightForeground, SelectionBackground: c.Selection, SelectionForeground: c.BrightForeground,
-		Color0: c.Background, Color1: c.Red, Color2: c.Green, Color3: c.Yellow,
+		Color0: c.LighterBackground, Color1: c.Red, Color2: c.Green, Color3: c.Yellow,
 		Color4: c.Blue, Color5: c.Magenta, Color6: c.Cyan, Color7: c.Foreground,
 		Color8: c.Muted, Color9: c.BrightRed, Color10: c.BrightGreen, Color11: c.BrightYellow,
 		Color12: c.BrightBlue, Color13: c.BrightMagenta, Color14: c.BrightCyan, Color15: c.BrightForeground,

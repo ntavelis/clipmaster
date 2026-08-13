@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Mapped Omarchy 4 `color0` to `lighter_background` so elevated UI surfaces remain distinct from the main background.
+
 ## [0.8.0] - 2026-08-13
 
 ### Changed

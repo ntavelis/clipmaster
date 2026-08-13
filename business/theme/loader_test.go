@@ -57,7 +57,7 @@ bright_magenta = "bright-magenta"
 	if err != nil {
 		t.Fatal(err)
 	}
-	if colors.Cursor != "bright-foreground" || colors.SelectionBackground != "selection" || colors.Color0 != "background" || colors.Color7 != "foreground" {
+	if colors.Cursor != "bright-foreground" || colors.SelectionBackground != "selection" || colors.Color0 != "lighter-background" || colors.Color7 != "foreground" {
 		t.Fatalf("unexpected Omarchy 4 base conversion: %+v", colors)
 	}
 	if colors.Color1 != "red" || colors.Color10 != "bright-green" || colors.Color15 != "bright-foreground" {
