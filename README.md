@@ -136,6 +136,12 @@ Environment variable equivalent:
 export OMACLIP_COPY_HOOK='hyprctl dispatch "hl.dsp.workspace.toggle_special(\"scratchpad\")" && sleep 0.2 && wtype -M ctrl -M shift -P v -p v -m shift -m ctrl'
 ```
 
+### Example Hyprland scratchpad setup
+
+Check the [example Hyprland scratchpad setup](.docs/omarchy-scratchpad.md) to
+start Omaclip in the scratchpad, close the scratchpad after selecting an entry,
+and paste it at the current text cursor location.
+
 ### mDNS interface binding
 
 By default, mDNS peer discovery uses IPv4 multicast on all eligible network
