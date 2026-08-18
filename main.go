@@ -28,6 +28,7 @@ const appVersion = "0.8.1"
 type appConfig struct {
 	ThemeColorPath string `conf:"help:full path to an Omarchy theme colors.toml file; when unset Omarchy 4 and 3 locations are detected automatically"`
 	ConfigPath     string `conf:"help:path to the omaclip config file (default: $HOME/.config/omaclip/config.json)"`
+	CopyHook       string `conf:"help:shell command to run after an item is copied from Omaclip"`
 	Debug          bool   `conf:"default:false,help:enable debug log level"`
 	Clipboard      struct {
 		MaxHistory       int           `conf:"default:50,help:maximum number of clipboard entries to keep in history"`
@@ -93,6 +94,7 @@ func run() error {
 		MaxNonPngImageMB:             cfg.Clipboard.MaxNonPngImageMB,
 		ThemeColorPath:               cfg.ThemeColorPath,
 		ConfigPath:                   cfg.ConfigPath,
+		CopyHook:                     cfg.CopyHook,
 		PollInterval:                 cfg.Clipboard.PollInterval,
 		RemoteClipboardsPollInterval: cfg.RemoteClipboards.PollInterval,
 		RemoteClipboardsMaxHistory:   cfg.RemoteClipboards.MaxHistory,

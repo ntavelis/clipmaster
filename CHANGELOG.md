@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Configurable post-copy shell hook via `OMACLIP_COPY_HOOK` / `--copy-hook`, triggered after a selected local or remote entry is written to the system clipboard.
+
 ### Fixed
 
 - Aligned the built-in Tokyo Night `color0` with Omarchy 4's `lighter_background` so elevated surfaces remain distinct when no Omarchy theme is available.

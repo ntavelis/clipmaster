@@ -102,6 +102,27 @@ sudo install -m 755 omaclip /usr/local/bin/omaclip
 Omaclip can be configured via CLI flags or environment variables. Run
 `omaclip --help` to see all options.
 
+### Copy hook
+
+`--copy-hook` runs a shell command after Omaclip successfully writes a selected
+local or remote entry to the system clipboard. The command runs asynchronously,
+so a slow or failing hook does not block copying. Hook failures are written to
+the application log.
+
+For example, if Omaclip is open on a Hyprland special workspace named
+`omaclip`, this closes the workspace, restores focus to the previous window,
+and pastes the selected entry with `wtype`:
+
+```bash
+omaclip --copy-hook='hyprctl dispatch togglespecialworkspace omaclip && sleep 0.1 && wtype -M ctrl -P v -p v -m ctrl'
+```
+
+Environment variable equivalent:
+
+```bash
+export OMACLIP_COPY_HOOK='hyprctl dispatch togglespecialworkspace omaclip && sleep 0.1 && wtype -M ctrl -P v -p v -m ctrl'
+```
+
 ### Passphrase
 
 On first launch, omaclip will prompt for a passphrase used to secure peer
