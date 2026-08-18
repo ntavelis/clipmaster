@@ -16,22 +16,8 @@ type commandRunner struct {
 	command string
 }
 
-type nilRunner struct{}
-
-// NewRunner selects a command runner when a hook is configured and a no-op runner otherwise.
-func NewRunner(log *slog.Logger, command string) Runner {
-	if command == "" {
-		return nilRunner{}
-	}
-	return &commandRunner{log: log, command: command}
-}
-
-// Trigger performs no action when the copy hook is disabled.
-func (nilRunner) Trigger() {}
-
 // Trigger starts the hook through the system shell and logs failures asynchronously.
 func (r *commandRunner) Trigger() {
-
 	cmd := exec.Command("sh", "-c", r.command)
 	if err := cmd.Start(); err != nil {
 		r.log.Error("failed to start copy hook", "error", err)
