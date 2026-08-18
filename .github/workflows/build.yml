@@ -9,6 +9,25 @@ on:
     - cron: "0 2 * * *"
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - name: Check Go formatting
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "The following files are not formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -39,7 +58,7 @@ jobs:
 
   build-amd64:
     if: github.event_name == 'schedule'
-    needs: [test, lint]
+    needs: [format, test, lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
