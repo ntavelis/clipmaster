@@ -109,18 +109,25 @@ local or remote entry to the system clipboard. The command runs asynchronously,
 so a slow or failing hook does not block copying. Hook failures are written to
 the application log.
 
-For example, if Omaclip is open on a Hyprland special workspace named
-`omaclip`, this closes the workspace, restores focus to the previous window,
-and pastes the selected entry with `wtype`:
+To verify the hook is running, show a desktop notification after copying an
+entry:
 
 ```bash
-omaclip --copy-hook='hyprctl dispatch togglespecialworkspace omaclip && sleep 0.1 && wtype -M ctrl -P v -p v -m ctrl'
+omaclip --copy-hook='notify-send "Omaclip" "Copy hook triggered"'
+```
+
+For example, if Omaclip is open on a Hyprland special workspace named
+`scratchpad`, this closes the workspace, restores focus to the previous
+terminal, and pastes the selected entry with `wtype`:
+
+```bash
+omaclip --copy-hook='hyprctl dispatch "hl.dsp.workspace.toggle_special(\"scratchpad\")" && sleep 0.2 && wtype -M ctrl -M shift -P v -p v -m shift -m ctrl'
 ```
 
 Environment variable equivalent:
 
 ```bash
-export OMACLIP_COPY_HOOK='hyprctl dispatch togglespecialworkspace omaclip && sleep 0.1 && wtype -M ctrl -P v -p v -m ctrl'
+export OMACLIP_COPY_HOOK='hyprctl dispatch "hl.dsp.workspace.toggle_special(\"scratchpad\")" && sleep 0.2 && wtype -M ctrl -M shift -P v -p v -m shift -m ctrl'
 ```
 
 ### Passphrase
