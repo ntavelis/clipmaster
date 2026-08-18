@@ -10,15 +10,15 @@ import (
 
 // Watcher monitors a colors.toml file for changes and invokes a callback with the new colors.
 type Watcher struct {
-	path    string
+	path     string
 	onChange func(ThemeColors)
-	watcher *fsnotify.Watcher
+	watcher  *fsnotify.Watcher
 }
 
 // NewWatcher creates a Watcher that monitors the given colors.toml path.
 func NewWatcher(path string, onChange func(ThemeColors)) *Watcher {
 	return &Watcher{
-		path:    path,
+		path:     path,
 		onChange: onChange,
 	}
 }
