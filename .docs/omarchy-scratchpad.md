@@ -51,7 +51,8 @@ fi
 
 while [ -n "$INTERFACE" ]; do
   if [ "$(cat "/sys/class/net/$INTERFACE/operstate" 2>/dev/null)" = "up" ] \
-    && ip -o address show dev "$INTERFACE" scope global 2>/dev/null | grep -q .; then
+    && ip -o address show dev "$INTERFACE" scope global -tentative 2>/dev/null | grep -q . \
+    && ip -o route show default dev "$INTERFACE" 2>/dev/null | grep -q '^default '; then
     break
   fi
   sleep 1
@@ -80,9 +81,10 @@ Make it executable:
 chmod +x ~/.config/hypr/openandmovetoscratchpad.sh
 ```
 
-The launcher waits for the configured interface to be operational and have a
-global address. It then starts Omaclip, finds the window belonging to that exact
-process, and moves it to the scratchpad without changing the active workspace.
+The launcher waits for the configured interface to be operational, have a
+non-tentative global address, and carry the default route. It then starts
+Omaclip, finds the window belonging to that exact process, and moves it to the
+scratchpad without changing the active workspace.
 
 ## Start Omaclip from Hyprland
 
