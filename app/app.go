@@ -13,6 +13,7 @@ import (
 
 	"github.com/rhemvi/omaclip/app/handlers"
 	"github.com/rhemvi/omaclip/business/clipboard"
+	"github.com/rhemvi/omaclip/business/copyhook"
 	"github.com/rhemvi/omaclip/business/passphrase"
 	"github.com/rhemvi/omaclip/business/peersclipsync"
 	bsync "github.com/rhemvi/omaclip/business/sync"
@@ -39,6 +40,7 @@ type Config struct {
 	MaxNonPngImageMB             int
 	ThemeColorPath               string
 	ConfigPath                   string
+	CopyHook                     string
 	PollInterval                 time.Duration
 	RemoteClipboardsPollInterval time.Duration
 	RemoteClipboardsMaxHistory   int
@@ -60,6 +62,7 @@ type App struct {
 	log             *slog.Logger
 	cfg             Config
 	monitor         *clipboard.Monitor
+	copyHook        copyhook.Runner
 	colors          theme.ThemeColors
 	syncServer      *bsync.Server
 	discoverer      *fmdns.Discoverer
@@ -72,6 +75,7 @@ func NewApp(log *slog.Logger, cfg Config) *App {
 	return &App{
 		cfg:             cfg,
 		log:             log,
+		copyHook:        copyhook.NewRunner(log, cfg.CopyHook),
 		passphraseStore: &passphrase.Store{},
 	}
 }
@@ -166,9 +170,13 @@ func (a *App) SetPinnedIDs(ids []string) {
 	a.monitor.SetPinnedIDs(ids)
 }
 
-// CopyItem writes the entry with the given ID back to the system clipboard.
+// CopyItem writes the entry with the given ID back to the system clipboard and triggers the copy hook.
 func (a *App) CopyItem(id string) error {
-	return a.monitor.CopyItem(id)
+	if err := a.monitor.CopyItem(id); err != nil {
+		return err
+	}
+	a.copyHook.Trigger()
+	return nil
 }
 
 // GetRemoteClipboards returns clipboard entries from all discovered peers.
@@ -179,14 +187,22 @@ func (a *App) GetRemoteClipboards() []peersclipsync.PeerClipboard {
 	return a.peerFetcher.GetAll()
 }
 
-// CopyRemoteItem writes the given text directly to the system clipboard.
+// CopyRemoteItem writes the given text directly to the system clipboard and triggers the copy hook.
 func (a *App) CopyRemoteItem(content string) error {
-	return a.monitor.CopyText(content)
+	if err := a.monitor.CopyText(content); err != nil {
+		return err
+	}
+	a.copyHook.Trigger()
+	return nil
 }
 
-// CopyRemoteImage writes base64-encoded image data from a remote peer to the system clipboard.
+// CopyRemoteImage writes base64-encoded image data from a remote peer to the system clipboard and triggers the copy hook.
 func (a *App) CopyRemoteImage(imageDataBase64 string, mimeType string) error {
-	return a.monitor.CopyImage(imageDataBase64, mimeType)
+	if err := a.monitor.CopyImage(imageDataBase64, mimeType); err != nil {
+		return err
+	}
+	a.copyHook.Trigger()
+	return nil
 }
 
 // GetTheme returns the currently loaded theme colors.

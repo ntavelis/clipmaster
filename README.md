@@ -108,6 +108,34 @@ On first launch, omaclip will prompt for a passphrase used to secure peer
 sync. It is saved by default to `~/.config/omaclip/config.json`. All machines must
 share the same passphrase to discover and sync with each other.
 
+### Copy hook
+
+`--copy-hook` runs a shell command after Omaclip successfully writes a selected
+local or remote entry to the system clipboard. The command runs asynchronously,
+so a slow or failing hook does not block copying. Hook failures are written to
+the application log.
+
+To verify the hook is running, show a desktop notification after copying an
+entry:
+
+```bash
+omaclip --copy-hook='notify-send "Omaclip" "Copy hook triggered"'
+```
+
+For example, if Omaclip is open on a Hyprland special workspace named
+`scratchpad`, this closes the workspace, restores focus to the previous
+terminal, and pastes the selected entry with `wtype`:
+
+```bash
+omaclip --copy-hook='hyprctl dispatch "hl.dsp.workspace.toggle_special(\"scratchpad\")" && sleep 0.2 && wtype -M ctrl -M shift -P v -p v -m shift -m ctrl'
+```
+
+Environment variable equivalent:
+
+```bash
+export OMACLIP_COPY_HOOK='hyprctl dispatch "hl.dsp.workspace.toggle_special(\"scratchpad\")" && sleep 0.2 && wtype -M ctrl -M shift -P v -p v -m shift -m ctrl'
+```
+
 ### mDNS interface binding
 
 By default, mDNS peer discovery uses IPv4 multicast on all eligible network
