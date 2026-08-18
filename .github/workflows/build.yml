@@ -9,6 +9,40 @@ on:
     - cron: "0 2 * * *"
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - name: Check Go formatting
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "The following files are not formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+  tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - name: Check Go modules are tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -39,7 +73,7 @@ jobs:
 
   build-amd64:
     if: github.event_name == 'schedule'
-    needs: [test, lint]
+    needs: [format, tidy, test, lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

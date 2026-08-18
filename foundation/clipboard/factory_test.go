@@ -47,14 +47,14 @@ func TestNewReaderWriter(t *testing.T) {
 			wantBackend: "darwin (osascript+pbpaste)",
 		},
 		{
-			name:    "error when only osascript available",
+			name:      "error when only osascript available",
 			available: []string{"osascript"},
-			wantErr: true,
+			wantErr:   true,
 		},
 		{
-			name:    "error when only pbpaste available",
+			name:      "error when only pbpaste available",
 			available: []string{"pbpaste"},
-			wantErr: true,
+			wantErr:   true,
 		},
 		{
 			name:    "error when nothing available",

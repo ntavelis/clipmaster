@@ -5,10 +5,10 @@ import "time"
 
 // ClipboardEntry represents a single item captured from the clipboard.
 type ClipboardEntry struct {
-	ID          string    `json:"id"`
-	Content     string    `json:"content"`
-	ContentType string    `json:"contentType"`
+	ID            string    `json:"id"`
+	Content       string    `json:"content"`
+	ContentType   string    `json:"contentType"`
 	ImageData     string    `json:"imageData,omitempty"`
 	ImageMimeType string    `json:"imageMimeType,omitempty"`
-	Timestamp   time.Time `json:"timestamp"`
+	Timestamp     time.Time `json:"timestamp"`
 }

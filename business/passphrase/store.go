@@ -14,10 +14,10 @@ const minLength = 8
 const maxLength = 128
 
 var (
-	ErrTooShort        = errors.New("passphrase must be at least 8 characters")
-	ErrTooLong         = errors.New("passphrase must be at most 128 characters")
-	ErrLeadingSpace    = errors.New("passphrase must not start with whitespace")
-	ErrTrailingSpace   = errors.New("passphrase must not end with whitespace")
+	ErrTooShort      = errors.New("passphrase must be at least 8 characters")
+	ErrTooLong       = errors.New("passphrase must be at most 128 characters")
+	ErrLeadingSpace  = errors.New("passphrase must not start with whitespace")
+	ErrTrailingSpace = errors.New("passphrase must not end with whitespace")
 )
 
 // Validate returns an error if the passphrase does not meet requirements.

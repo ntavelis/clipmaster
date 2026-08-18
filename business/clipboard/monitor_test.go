@@ -21,7 +21,7 @@ type mockReader struct {
 	imgErr  error
 }
 
-func (r *mockReader) GetText(_ context.Context) (string, error) { return r.text, r.textErr }
+func (r *mockReader) GetText(_ context.Context) (string, error)  { return r.text, r.textErr }
 func (r *mockReader) GetImage(_ context.Context) ([]byte, error) { return r.img, r.imgErr }
 
 // makePNG generates a minimal valid 1x1 PNG image.
