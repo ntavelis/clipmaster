@@ -23,7 +23,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-//go:embed skills/omaclip/SKILL.md
+//go:embed .docs/SKILL.md
 var agentSkill string
 
 const appVersion = "0.9.0"
