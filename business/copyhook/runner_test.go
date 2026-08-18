@@ -25,7 +25,6 @@ func TestRunnerTrigger(t *testing.T) {
 }
 
 func TestRunnerTriggerDisabled(t *testing.T) {
-	t.Setenv("PATH", "")
 	var logs bytes.Buffer
 	runner := NewRunner(slog.New(slog.NewTextHandler(&logs, nil)), "")
 
