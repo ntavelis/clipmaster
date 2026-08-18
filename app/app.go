@@ -62,7 +62,7 @@ type App struct {
 	log             *slog.Logger
 	cfg             Config
 	monitor         *clipboard.Monitor
-	copyHook        *copyhook.Runner
+	copyHook        copyhook.Runner
 	colors          theme.ThemeColors
 	syncServer      *bsync.Server
 	discoverer      *fmdns.Discoverer

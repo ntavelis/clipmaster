@@ -1,7 +1,6 @@
 package copyhook
 
 import (
-	"bytes"
 	"io"
 	"log/slog"
 	"os"
@@ -24,14 +23,20 @@ func TestRunnerTrigger(t *testing.T) {
 	})
 }
 
-func TestRunnerTriggerDisabled(t *testing.T) {
-	var logs bytes.Buffer
-	runner := NewRunner(slog.New(slog.NewTextHandler(&logs, nil)), "")
+func TestNewRunnerSelectsNilRunnerForEmptyCommand(t *testing.T) {
+	runner := NewRunner(slog.New(slog.NewTextHandler(io.Discard, nil)), "")
 
+	if _, ok := runner.(nilRunner); !ok {
+		t.Fatalf("NewRunner() returned %T, want nilRunner", runner)
+	}
 	runner.Trigger()
+}
 
-	if logs.Len() != 0 {
-		t.Fatalf("empty hook attempted to start a command: %s", logs.String())
+func TestNewRunnerSelectsCommandRunnerForCommand(t *testing.T) {
+	runner := NewRunner(slog.New(slog.NewTextHandler(io.Discard, nil)), "true")
+
+	if _, ok := runner.(*commandRunner); !ok {
+		t.Fatalf("NewRunner() returned %T, want *commandRunner", runner)
 	}
 }
 
