@@ -5,7 +5,7 @@ your clipboard history, lets you browse and copy items, and is designed for a
 keyboard-first workflow. Run it on multiple machines and they form a secure mesh,
 automatically discovering each other and sharing their clipboards.
 
-<https://github.com/user-attachments/assets/434b6ff6-21e1-459b-833f-7f63c5a9ee88>
+https://github.com/user-attachments/assets/0fe02cc8-3e18-4d15-a089-144030f26b49
 
 It works on Linux and macOS, but it loves [Omarchy](https://omarchy.org),
 hot-reloading its color scheme the moment your OS theme changes.
