@@ -181,7 +181,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
 
@@ -198,7 +198,7 @@ jobs:
                     dist/out/omaclip-darwin-amd64 dist/out/omaclip-darwin-arm64
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/out/omaclip-linux-amd64
