@@ -102,6 +102,12 @@ sudo install -m 755 omaclip /usr/local/bin/omaclip
 Omaclip can be configured via CLI flags or environment variables. Run
 `omaclip --help` to see all options.
 
+### Passphrase
+
+On first launch, omaclip will prompt for a passphrase used to secure peer
+sync. It is saved by default to `~/.config/omaclip/config.json`. All machines must
+share the same passphrase to discover and sync with each other.
+
 ### Copy hook
 
 `--copy-hook` runs a shell command after Omaclip successfully writes a selected
@@ -129,12 +135,6 @@ Environment variable equivalent:
 ```bash
 export OMACLIP_COPY_HOOK='hyprctl dispatch "hl.dsp.workspace.toggle_special(\"scratchpad\")" && sleep 0.2 && wtype -M ctrl -M shift -P v -p v -m shift -m ctrl'
 ```
-
-### Passphrase
-
-On first launch, omaclip will prompt for a passphrase used to secure peer
-sync. It is saved by default to `~/.config/omaclip/config.json`. All machines must
-share the same passphrase to discover and sync with each other.
 
 ### mDNS interface binding
 
