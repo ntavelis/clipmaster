@@ -122,7 +122,7 @@ omaclip --copy-hook='notify-send "Omaclip" "Copy hook triggered"'
 
 For example, if Omaclip is open on a Hyprland special workspace named
 `scratchpad`, this closes the workspace, restores focus to the previous
-terminal, and pastes the selected entry with `wtype`:
+window, and pastes the selected entry with `wtype`:
 
 ```bash
 omaclip --copy-hook='hyprctl dispatch "hl.dsp.workspace.toggle_special(\"scratchpad\")" && sleep 0.2 && wtype -M ctrl -M shift -P v -p v -m shift -m ctrl'
