@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Simplified the README copy-hook documentation by removing redundant implementation details and the duplicate environment-variable example.
+- Replaced the bundled Hyprland scratchpad setup with a link to the dedicated Omarchy Omaclip QML plugin.
 
 ## [0.9.0] - 2026-08-18
 

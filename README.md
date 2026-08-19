@@ -97,6 +97,13 @@ curl -fsSL https://github.com/rhemvi/omaclip/releases/latest/download/omaclip-da
 sudo install -m 755 omaclip /usr/local/bin/omaclip
 ```
 
+## Omarchy shell plugin
+
+Omarchy users can install the [Omarchy Omaclip QML plugin](https://github.com/rhemvi/omarchy-omaclip)
+to start Omaclip automatically in a Hyprland special workspace and register a
+copy hook that closes the workspace and pastes the copied entry into the focused
+window at the cursor location.
+
 ## Configuration
 
 Omaclip can be configured via CLI flags or environment variables. Run
@@ -127,12 +134,6 @@ window, and pastes the selected entry with `wtype`:
 ```bash
 omaclip --copy-hook='hyprctl dispatch "hl.dsp.workspace.toggle_special(\"scratchpad\")" && sleep 0.2 && wtype -M ctrl -M shift -P v -p v -m shift -m ctrl'
 ```
-
-### Example Hyprland scratchpad setup
-
-Check the [example Hyprland scratchpad setup](.docs/omarchy-scratchpad.md) to
-start Omaclip in the scratchpad, close the scratchpad after selecting an entry,
-and paste it at the current text cursor location.
 
 ### mDNS interface binding
 
