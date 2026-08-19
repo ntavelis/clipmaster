@@ -111,7 +111,6 @@ add items to Omaclip history or configure copy hooks, then exits.
 omaclip --print-agent-skill
 ```
 
-
 ### Passphrase
 
 On first launch, omaclip will prompt for a passphrase used to secure peer
