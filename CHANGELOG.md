@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Embedded agent skill, available with `--print-agent-skill`, for adding supported clipboard content to Omaclip history and configuring copy hooks.
+
 ### Changed
 
 - Simplified the README copy-hook documentation by removing redundant implementation details and the duplicate environment-variable example.

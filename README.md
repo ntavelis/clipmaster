@@ -109,6 +109,15 @@ window at the cursor location.
 Omaclip can be configured via CLI flags or environment variables. Run
 `omaclip --help` to see all options.
 
+### Agent skill
+
+`--print-agent-skill` prints a concise Markdown skill for agents that need to
+add items to Omaclip history or configure copy hooks, then exits.
+
+```bash
+omaclip --print-agent-skill
+```
+
 ### Passphrase
 
 On first launch, omaclip will prompt for a passphrase used to secure peer

@@ -23,14 +23,18 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed .docs/SKILL.md
+var agentSkill string
+
 const appVersion = "0.9.0"
 
 type appConfig struct {
-	ThemeColorPath string `conf:"help:full path to an Omarchy theme colors.toml file; when unset Omarchy 4 and 3 locations are detected automatically"`
-	ConfigPath     string `conf:"help:path to the omaclip config file (default: $HOME/.config/omaclip/config.json)"`
-	CopyHook       string `conf:"help:shell command to run after an item is copied from Omaclip"`
-	Debug          bool   `conf:"default:false,help:enable debug log level"`
-	Clipboard      struct {
+	ThemeColorPath  string `conf:"help:full path to an Omarchy theme colors.toml file; when unset Omarchy 4 and 3 locations are detected automatically"`
+	ConfigPath      string `conf:"help:path to the omaclip config file (default: $HOME/.config/omaclip/config.json)"`
+	CopyHook        string `conf:"help:shell command to run after an item is copied from Omaclip"`
+	PrintAgentSkill bool   `conf:"default:false,help:print the Omaclip agent skill in Markdown and exit"`
+	Debug           bool   `conf:"default:false,help:enable debug log level"`
+	Clipboard       struct {
 		MaxHistory       int           `conf:"default:50,help:maximum number of clipboard entries to keep in history"`
 		MaxPinned        int           `conf:"default:3,help:maximum number of clipboard items that can be pinned at the top of the list"`
 		MaxPngImageMB    int           `conf:"default:5,help:maximum PNG image size in megabytes to accept into clipboard history"`
@@ -73,6 +77,10 @@ func run() error {
 	}
 	if err != nil {
 		return fmt.Errorf("parsing config: %w", err)
+	}
+	if cfg.PrintAgentSkill {
+		fmt.Print(agentSkill)
+		return nil
 	}
 
 	minLevel := slog.LevelInfo
