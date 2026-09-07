@@ -42,13 +42,13 @@ func (h *ClipboardHandler) GetClipboardChecksum(w http.ResponseWriter, r *http.R
 	response := struct {
 		Checksum string `json:"checksum"`
 	}{Checksum: h.Monitor.GetChecksum()}
-	json.NewEncoder(w).Encode(response) //nolint:errcheck
+	json.NewEncoder(w).Encode(response)
 }
 
 // GetClipboard returns a payload-free manifest with its own coherent fingerprint.
 func (h *ClipboardHandler) GetClipboard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(h.Monitor.GetManifest()) //nolint:errcheck
+	json.NewEncoder(w).Encode(h.Monitor.GetManifest())
 }
 
 // GetClipboardContent returns the exact stored text or raw image bytes for an entry.

@@ -85,9 +85,9 @@ func (s *protocolServer) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.URL.Path {
 	case "/api/clipboard/checksum":
-		json.NewEncoder(w).Encode(map[string]string{"checksum": s.poll}) //nolint:errcheck
+		json.NewEncoder(w).Encode(map[string]string{"checksum": s.poll})
 	case "/api/clipboard":
-		json.NewEncoder(w).Encode(s.manifest) //nolint:errcheck
+		json.NewEncoder(w).Encode(s.manifest)
 	default:
 		if !strings.HasSuffix(r.URL.Path, "/content") {
 			http.NotFound(w, r)
