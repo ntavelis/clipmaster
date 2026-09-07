@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/rhemvi/omaclip/business/clipboard"
@@ -13,14 +14,14 @@ import (
 
 // clipboardMonitor is the subset of clipboard.Monitor used by ClipboardHandler.
 type clipboardMonitor interface {
-	GetHistory() []clipboard.ClipboardEntry
+	GetChecksum() string
+	GetManifest() clipboard.Manifest
 	GetEntry(id string) (clipboard.ClipboardEntry, bool)
 }
 
 // ClipboardHandler holds dependencies for all HTTP handlers.
 type ClipboardHandler struct {
 	Monitor         clipboardMonitor
-	MaxHistory      int
 	PassphraseStore *passphrase.Store
 }
 
@@ -35,34 +36,32 @@ func RequirePassphrase(store *passphrase.Store, next http.HandlerFunc) http.Hand
 	}
 }
 
-// GetClipboard returns the last N clipboard entries as JSON.
-// Image entries are included but without their ImageData payload.
-func (h *ClipboardHandler) GetClipboard(w http.ResponseWriter, r *http.Request) {
-	all := h.Monitor.GetHistory()
-
-	stripped := make([]clipboard.ClipboardEntry, 0, h.MaxHistory)
-	for _, e := range all {
-		if len(stripped) >= h.MaxHistory {
-			break
-		}
-		if e.ContentType == "image-rejected" {
-			continue
-		}
-		// Will fetch images with dedicated endpoint, so strip data from this response to save bandwidth
-		e.ImageData = ""
-		stripped = append(stripped, e)
-	}
-
+// GetClipboardChecksum returns the precomputed fingerprint of the shared history.
+func (h *ClipboardHandler) GetClipboardChecksum(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stripped) //nolint:errcheck
+	response := struct {
+		Checksum string `json:"checksum"`
+	}{Checksum: h.Monitor.GetChecksum()}
+	json.NewEncoder(w).Encode(response) //nolint:errcheck
 }
 
-// GetClipboardImage returns the raw image bytes for a specific clipboard entry.
-func (h *ClipboardHandler) GetClipboardImage(w http.ResponseWriter, r *http.Request) {
+// GetClipboard returns a payload-free manifest with its own coherent fingerprint.
+func (h *ClipboardHandler) GetClipboard(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(h.Monitor.GetManifest()) //nolint:errcheck
+}
+
+// GetClipboardContent returns the exact stored text or raw image bytes for an entry.
+func (h *ClipboardHandler) GetClipboardContent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	entry, ok := h.Monitor.GetEntry(id)
-	if !ok || entry.ContentType != "image" {
+	if !ok || (entry.ContentType != "text" && entry.ContentType != "image") {
 		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	if entry.ContentType == "text" {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		io.WriteString(w, entry.Content) //nolint:errcheck
 		return
 	}
 

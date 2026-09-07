@@ -26,18 +26,20 @@ A Wails desktop clipboard manager that tracks clipboard history and syncs across
 - Default max: 50 items, configurable via `OMACLIP_CLIPBOARD_MAX_HISTORY`
 - Items can be pinned to the top of the list (local tab only, in-memory only); default max: 3 pins, configurable via `OMACLIP_CLIPBOARD_MAX_PINNED`. Exceeding the cap auto-unpins the oldest pin (FIFO).
 - Supports text and images (max 25 MB per image); content type is either `"text"` or `"image"`
-- Images are normalised to PNG at ingestion (`image.Decode` + `png.Encode`) regardless of original format; stored as base64-encoded PNG in `ClipboardEntry.ImageData`; `ClipboardEntry.ImageMimeType` carries the MIME type (`"image/png"` after normalisation)
-- SHA-256 used for duplicate detection
+- Images are stored in their original format as base64 in `ClipboardEntry.ImageData`; `ImageMimeType` carries the original MIME type. Non-PNG images are converted to PNG on copy-out where supported.
+- `ClipboardEntry.Checksum` stores SHA-256 of exact text bytes or raw stored image bytes at ingestion; image hashing also detects local clipboard changes.
 - Wayland-aware: uses `wl-paste`/`wl-copy` if available; falls back through xclip → xsel → macOS (`osascript`+`pbpaste` both required)
 
 ## Multi-Machine Sync (mDNS + HTTPS)
 
 - Each instance starts an HTTPS server on all IPv4 interfaces (`0.0.0.0`); the port is configurable and defaults to a random OS-assigned port
 - TLS: a CA cert is derived from the passphrase key bytes and used to sign a leaf cert; peers validate against this CA — no `InsecureSkipVerify`
-- mDNS advertises the port with TXT records: `version=1` and `ph=<first 16 hex chars of Argon2id passphrase hash>`
-- Peers filter by `ph=` — only instances sharing the same passphrase connect
-- Peer fetcher polls all discovered peers: `GET /api/clipboard` with `X-Omaclip-Pass` header; handler validates with `subtle.ConstantTimeCompare` (timing-attack resistant)
-- Images are fetched separately: metadata-only on `GET /api/clipboard`, then `GET /api/clipboard/{id}/image` for PNG bytes
+- mDNS advertises `version=2` and `ph=<first 16 hex chars of Argon2id passphrase hash>`; discovery requires both matching protocol and passphrase. All machines must upgrade together; no legacy fallback, including manual peers.
+- All endpoints require `X-Omaclip-Pass`, validated with `subtle.ConstantTimeCompare`.
+- `GET /api/clipboard/checksum` returns the precomputed advertised-history fingerprint. The monitor rebuilds it after history changes from ordered IDs, content checksums, types, MIME types, and timestamps, limited to the configured shared window and excluding rejected images.
+- On change, `GET /api/clipboard` returns a payload-free manifest with its own fingerprint; `GET /api/clipboard/{id}/content` returns exact text or raw image bytes only when missing from the receiver's per-peer cache.
+- Payload identity is `(contentType, checksum)`; receivers verify hashes and publish only complete snapshots. Failures retain the previous visible snapshot and successful pending downloads; later polls can supersede pending snapshots without sender-side retention.
+- Cache state retains only the visible/latest pending snapshots and is released when a peer disappears.
 - Peers expire after ~3 missed browse cycles (~6s)
 
 ## Passphrase

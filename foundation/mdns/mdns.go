@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	serviceType = "_omaclip._tcp"
-	domain      = "local."
+	serviceType     = "_omaclip._tcp"
+	domain          = "local."
+	protocolVersion = "version=2"
 )
 
 var (
@@ -99,7 +100,7 @@ func (d *Discoverer) Register(port int) error {
 		return err
 	}
 
-	txt := []string{"version=1", "ph=" + d.passphraseStore.ShortHash()}
+	txt := []string{protocolVersion, "ph=" + d.passphraseStore.ShortHash()}
 	servers := make([]*mdns.Server, 0, len(bindings))
 	for _, binding := range bindings {
 		hostName := instanceName + "." + domain
@@ -257,6 +258,20 @@ func (d *Discoverer) peerFromServiceEntry(entry *mdns.ServiceEntry) (Peer, bool)
 
 	name := normalizeInstanceName(entry.Name)
 	if name == "" || d.myName != "" && name == d.myName {
+		return Peer{}, false
+	}
+
+	versionMatches := false
+	for _, field := range entry.InfoFields {
+		if strings.HasPrefix(field, "version=") {
+			if field != protocolVersion {
+				return Peer{}, false
+			}
+			versionMatches = true
+		}
+	}
+	if !versionMatches {
+		d.log.Debug("mdns peer skipped: incompatible protocol", "name", name)
 		return Peer{}, false
 	}
 
