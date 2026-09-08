@@ -55,6 +55,8 @@ type Monitor struct {
 	log              *slog.Logger
 	history          []ClipboardEntry
 	maxHistory       int
+	remoteMaxHistory int
+	manifest         Manifest
 	maxPngImageMB    int
 	maxNonPngImageMB int
 	pollInterval     time.Duration
@@ -77,16 +79,19 @@ func NewMonitor(
 	maxNonPngImageMB int,
 	pollInterval time.Duration,
 ) *Monitor {
-	return &Monitor{
+	m := &Monitor{
 		log:              log,
 		reader:           reader,
 		writer:           writer,
 		maxHistory:       maxHistory,
+		remoteMaxHistory: max(0, maxHistory),
 		maxPngImageMB:    maxPngImageMB,
 		maxNonPngImageMB: maxNonPngImageMB,
 		pollInterval:     pollInterval,
 		pinnedIDs:        make(map[string]struct{}),
 	}
+	m.rebuildManifest()
+	return m
 }
 
 // SetPinnedIDs replaces the set of entry IDs that must be preserved from history trimming.
@@ -97,6 +102,50 @@ func (m *Monitor) SetPinnedIDs(ids []string) {
 	for _, id := range ids {
 		m.pinnedIDs[id] = struct{}{}
 	}
+}
+
+// SetRemoteMaxHistory configures the shared history window before monitoring starts.
+func (m *Monitor) SetRemoteMaxHistory(limit int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.remoteMaxHistory = max(0, limit)
+	m.rebuildManifest()
+}
+
+// GetChecksum returns the precomputed fingerprint without copying history or hashing payloads.
+func (m *Monitor) GetChecksum() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.manifest.Checksum
+}
+
+// GetManifest returns a coherent metadata snapshot independent of future history changes.
+func (m *Monitor) GetManifest() Manifest {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	entries := make([]ManifestEntry, len(m.manifest.Entries))
+	copy(entries, m.manifest.Entries)
+	return Manifest{Checksum: m.manifest.Checksum, Entries: entries}
+}
+
+// rebuildManifest publishes the shared window after a history mutation.
+// The caller holds mu, except during construction before the monitor is visible.
+func (m *Monitor) rebuildManifest() {
+	entries := make([]ManifestEntry, 0, min(len(m.history), m.remoteMaxHistory))
+	for i := len(m.history) - 1; i >= 0 && len(entries) < m.remoteMaxHistory; i-- {
+		entry := m.history[i]
+		if !IsSupportedContentType(entry.ContentType) {
+			continue
+		}
+		entries = append(entries, ManifestEntry{
+			ID:            entry.ID,
+			Checksum:      entry.Checksum,
+			ContentType:   entry.ContentType,
+			ImageMimeType: entry.ImageMimeType,
+			Timestamp:     entry.Timestamp,
+		})
+	}
+	m.manifest = Manifest{Checksum: ManifestChecksum(entries), Entries: entries}
 }
 
 // Start begins monitoring the clipboard in a background goroutine. If the reader implements Watcher and watching succeeds, event-driven watching is used; otherwise falls back to polling.
@@ -183,7 +232,7 @@ func (m *Monitor) CopyItem(id string) error {
 
 	for _, entry := range m.history {
 		if entry.ID == id {
-			if entry.ContentType == "image" {
+			if ParseContentType(entry.ContentType) == ContentTypeImage {
 				imgBytes, err := base64.StdEncoding.DecodeString(entry.ImageData)
 				if err != nil {
 					return fmt.Errorf("decoding image data: %w", err)
@@ -293,8 +342,9 @@ func (m *Monitor) readClipboard(parent context.Context) {
 		m.lastSeenHash = ""
 		m.addEntry(ClipboardEntry{
 			ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
+			Checksum:    sha256Hex([]byte(text)),
 			Content:     text,
-			ContentType: "text",
+			ContentType: ContentTypeText.String(),
 			Timestamp:   time.Now(),
 		})
 	}
@@ -329,7 +379,8 @@ func (m *Monitor) readClipboard(parent context.Context) {
 		} else {
 			m.addEntry(ClipboardEntry{
 				ID:            fmt.Sprintf("%d", time.Now().UnixNano()),
-				ContentType:   "image",
+				Checksum:      imgHash,
+				ContentType:   ContentTypeImage.String(),
 				ImageData:     base64.StdEncoding.EncodeToString(imgData),
 				ImageMimeType: mimeType,
 				Timestamp:     time.Now(),
@@ -390,6 +441,7 @@ func (m *Monitor) addEntry(entry ClipboardEntry) {
 		}
 		m.history = kept
 	}
+	m.rebuildManifest()
 
 	cb := m.OnNewEntry
 	m.mu.Unlock()

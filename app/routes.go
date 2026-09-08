@@ -7,6 +7,7 @@ import (
 
 func registerRoutes(s *bsync.Server, h *handlers.ClipboardHandler) {
 	auth := handlers.RequirePassphrase
+	s.Handle("GET /api/clipboard/checksum", auth(h.PassphraseStore, h.GetClipboardChecksum))
 	s.Handle("GET /api/clipboard", auth(h.PassphraseStore, h.GetClipboard))
-	s.Handle("GET /api/clipboard/{id}/image", auth(h.PassphraseStore, h.GetClipboardImage))
+	s.Handle("GET /api/clipboard/{id}/content", auth(h.PassphraseStore, h.GetClipboardContent))
 }

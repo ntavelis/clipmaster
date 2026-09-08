@@ -1,20 +1,25 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/rhemvi/omaclip/business/clipboard"
 	"github.com/rhemvi/omaclip/business/passphrase"
 )
 
 type fakeMonitor struct {
-	history []clipboard.ClipboardEntry
+	history  []clipboard.ClipboardEntry
+	manifest clipboard.Manifest
 }
 
-func (f *fakeMonitor) GetHistory() []clipboard.ClipboardEntry { return f.history }
+func (f *fakeMonitor) GetChecksum() string             { return f.manifest.Checksum }
+func (f *fakeMonitor) GetManifest() clipboard.Manifest { return f.manifest }
 func (f *fakeMonitor) GetEntry(id string) (clipboard.ClipboardEntry, bool) {
 	for _, e := range f.history {
 		if e.ID == id {
@@ -60,42 +65,78 @@ func TestRequirePassphrase_Unauthorized(t *testing.T) {
 	}
 }
 
-func TestGetClipboard_SkipsRejectedAndFillsLimit(t *testing.T) {
-	// History is returned most-recent-first; mix rejected entries among valid ones.
-	history := []clipboard.ClipboardEntry{
-		{ID: "1", ContentType: "text", Content: "a"},
-		{ID: "2", ContentType: "image-rejected", Content: "rejected"},
-		{ID: "3", ContentType: "text", Content: "b"},
-		{ID: "4", ContentType: "image-rejected", Content: "rejected"},
-		{ID: "5", ContentType: "text", Content: "c"},
-		{ID: "6", ContentType: "text", Content: "d"},
-		{ID: "7", ContentType: "text", Content: "e"},
-	}
-
-	h := &ClipboardHandler{
-		Monitor:    &fakeMonitor{history: history},
-		MaxHistory: 5,
-	}
-
-	req := httptest.NewRequest(http.MethodGet, "/api/clipboard", nil)
+func TestGetClipboard_PayloadFreeManifest(t *testing.T) {
+	entries := []clipboard.ManifestEntry{{
+		ID: "text", Checksum: "content-checksum", ContentType: "text", Timestamp: time.Unix(1, 0).UTC(),
+	}}
+	manifest := clipboard.Manifest{Checksum: clipboard.ManifestChecksum(entries), Entries: entries}
+	h := &ClipboardHandler{Monitor: &fakeMonitor{
+		manifest: manifest,
+		history:  []clipboard.ClipboardEntry{{ID: "text", ContentType: "text", Content: "private payload"}},
+	}}
 	rec := httptest.NewRecorder()
-	h.GetClipboard(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", rec.Code)
+	h.GetClipboard(rec, httptest.NewRequest(http.MethodGet, "/api/clipboard", nil))
+	var got clipboard.Manifest
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
 	}
-
-	var entries []clipboard.ClipboardEntry
-	if err := json.NewDecoder(rec.Body).Decode(&entries); err != nil {
-		t.Fatalf("decode response: %v", err)
+	if got.Checksum != manifest.Checksum || clipboard.ManifestChecksum(got.Entries) != got.Checksum {
+		t.Fatalf("manifest fingerprint does not match response: %+v", got)
 	}
-
-	if len(entries) != 5 {
-		t.Errorf("got %d entries, want 5", len(entries))
+	var raw struct {
+		Entries []map[string]json.RawMessage `json:"entries"`
 	}
-	for _, e := range entries {
-		if e.ContentType == "image-rejected" {
-			t.Errorf("entry %s with image-rejected type should not be returned", e.ID)
+	if err := json.Unmarshal(rec.Body.Bytes(), &raw); err != nil {
+		t.Fatal(err)
+	}
+	if len(raw.Entries) != 1 {
+		t.Fatalf("got %d manifest entries, want 1", len(raw.Entries))
+	}
+	for _, key := range []string{"content", "imageData"} {
+		if _, ok := raw.Entries[0][key]; ok {
+			t.Errorf("manifest includes payload field %s", key)
 		}
+	}
+}
+
+func TestGetClipboardContent(t *testing.T) {
+	text := " \ttext\r\nwith\x00bytes\n"
+	image := []byte{0x89, 'P', 'N', 'G', '\r', '\n', 0, 0xff}
+	h := &ClipboardHandler{Monitor: &fakeMonitor{history: []clipboard.ClipboardEntry{
+		{ID: "text", ContentType: "text", Content: text},
+		{ID: "image", ContentType: "image", ImageData: base64.StdEncoding.EncodeToString(image), ImageMimeType: "image/png"},
+		{ID: "rejected", ContentType: "image-rejected", Content: "not shared"},
+		{ID: "corrupt", ContentType: "image", ImageData: "invalid!"},
+	}}}
+	tests := []struct {
+		id          string
+		status      int
+		contentType string
+		body        []byte
+	}{
+		{"text", http.StatusOK, "text/plain; charset=utf-8", []byte(text)},
+		{"image", http.StatusOK, "image/png", image},
+		{"rejected", http.StatusNotFound, "", nil},
+		{"missing", http.StatusNotFound, "", nil},
+		{"corrupt", http.StatusInternalServerError, "", nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.id, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/clipboard/"+tt.id+"/content", nil)
+			req.SetPathValue("id", tt.id)
+			rec := httptest.NewRecorder()
+			h.GetClipboardContent(rec, req)
+			if rec.Code != tt.status {
+				t.Fatalf("status = %d, want %d", rec.Code, tt.status)
+			}
+			if tt.status == http.StatusOK {
+				if got := rec.Header().Get("Content-Type"); got != tt.contentType {
+					t.Errorf("Content-Type = %q, want %q", got, tt.contentType)
+				}
+				if !bytes.Equal(rec.Body.Bytes(), tt.body) {
+					t.Errorf("content = %q, want exact bytes %q", rec.Body.Bytes(), tt.body)
+				}
+			}
+		})
 	}
 }

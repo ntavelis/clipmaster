@@ -2,6 +2,7 @@ export namespace clipboard {
 	
 	export class ClipboardEntry {
 	    id: string;
+	    checksum: string;
 	    content: string;
 	    contentType: string;
 	    imageData?: string;
@@ -16,6 +17,7 @@ export namespace clipboard {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	        this.checksum = source["checksum"];
 	        this.content = source["content"];
 	        this.contentType = source["contentType"];
 	        this.imageData = source["imageData"];

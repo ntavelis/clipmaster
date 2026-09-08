@@ -92,6 +92,7 @@ func (a *App) Startup(ctx context.Context) {
 	}
 	a.log.Info("clipboard backend selected", "backend", backend)
 	a.monitor = clipboard.NewMonitor(a.log, reader, writer, a.cfg.MaxHistory, a.cfg.MaxPngImageMB, a.cfg.MaxNonPngImageMB, a.cfg.PollInterval)
+	a.monitor.SetRemoteMaxHistory(a.cfg.RemoteClipboardsMaxHistory)
 
 	themeColorPath, err := areWeRunningInOmarchy(a.cfg.ThemeColorPath)
 	if err == nil {
@@ -275,7 +276,6 @@ func (a *App) startNetworking() error {
 	a.syncServer = bsync.New(a.log, leafCert, a.cfg.SyncServerPort)
 	registerRoutes(a.syncServer, &handlers.ClipboardHandler{
 		Monitor:         a.monitor,
-		MaxHistory:      a.cfg.RemoteClipboardsMaxHistory,
 		PassphraseStore: a.passphraseStore,
 	})
 	if err := a.syncServer.Start(); err != nil {

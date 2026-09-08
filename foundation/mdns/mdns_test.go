@@ -224,7 +224,7 @@ func TestPeerFromServiceEntry(t *testing.T) {
 		Name:       "peer-19902._omaclip._tcp.local.",
 		AddrV4:     net.ParseIP("192.168.1.20"),
 		Port:       19902,
-		InfoFields: []string{"version=1", "ph=" + ps.ShortHash()},
+		InfoFields: []string{"version=2", "ph=" + ps.ShortHash()},
 	}
 	peer, ok := d.peerFromServiceEntry(valid)
 	if !ok {
@@ -242,7 +242,10 @@ func TestPeerFromServiceEntry(t *testing.T) {
 		{name: "missing IPv4", entry: &mdns.ServiceEntry{Name: valid.Name, Port: valid.Port, InfoFields: valid.InfoFields}},
 		{name: "missing port", entry: &mdns.ServiceEntry{Name: valid.Name, AddrV4: valid.AddrV4, InfoFields: valid.InfoFields}},
 		{name: "self", entry: &mdns.ServiceEntry{Name: "host-19901._omaclip._tcp.local.", AddrV4: valid.AddrV4, Port: valid.Port, InfoFields: valid.InfoFields}},
-		{name: "passphrase mismatch", entry: &mdns.ServiceEntry{Name: valid.Name, AddrV4: valid.AddrV4, Port: valid.Port, InfoFields: []string{"ph=wrong"}}},
+		{name: "passphrase mismatch", entry: &mdns.ServiceEntry{Name: valid.Name, AddrV4: valid.AddrV4, Port: valid.Port, InfoFields: []string{"version=2", "ph=wrong"}}},
+		{name: "legacy protocol", entry: &mdns.ServiceEntry{Name: valid.Name, AddrV4: valid.AddrV4, Port: valid.Port, InfoFields: []string{"version=1", "ph=" + ps.ShortHash()}}},
+		{name: "missing protocol", entry: &mdns.ServiceEntry{Name: valid.Name, AddrV4: valid.AddrV4, Port: valid.Port, InfoFields: []string{"ph=" + ps.ShortHash()}}},
+		{name: "future protocol", entry: &mdns.ServiceEntry{Name: valid.Name, AddrV4: valid.AddrV4, Port: valid.Port, InfoFields: []string{"version=3", "ph=" + ps.ShortHash()}}},
 	}
 
 	for _, tt := range tests {

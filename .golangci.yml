@@ -7,6 +7,7 @@ linters:
         - (*os.File).Close
         - (io.Closer).Close
         - (*net/http.Response).Body.Close
+        - (*encoding/json.Encoder).Encode
         - (*github.com/fsnotify/fsnotify.Watcher).Close
         - os.Remove
         - fmt.Fprint

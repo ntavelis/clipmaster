@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replaced repeated clipboard payload downloads with protocol v2: precomputed history checksums, payload-free manifests, and SHA-256-verified downloads of only missing text/image content.
+- Remote histories update atomically after all content arrives; failed downloads preserve the previous complete history and reuse successfully fetched content on subsequent polls.
+- Require protocol v2 on every peer, with incompatible mDNS advertisements excluded and no legacy fallback.
 - Simplified the README copy-hook documentation by removing redundant implementation details and the duplicate environment-variable example.
 - Replaced the bundled Hyprland scratchpad setup with a link to the dedicated Omarchy Omaclip QML plugin.
 

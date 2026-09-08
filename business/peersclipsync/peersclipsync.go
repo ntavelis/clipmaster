@@ -3,14 +3,17 @@ package peersclipsync
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -32,6 +35,40 @@ type peersProvider interface {
 	Peers() []fmdns.Peer
 }
 
+type contentKey struct {
+	contentType string
+	checksum    string
+}
+
+type peerState struct {
+	committed clipboard.Manifest
+	pending   *clipboard.Manifest
+	payloads  map[contentKey]string
+}
+
+// prune keeps payloads needed by the visible snapshot or the latest pending one.
+func (s *peerState) prune() {
+	needed := make(map[contentKey]struct{}, len(s.committed.Entries))
+	for _, entry := range s.committed.Entries {
+		needed[contentKey{entry.ContentType, entry.Checksum}] = struct{}{}
+	}
+	if s.pending != nil {
+		for _, entry := range s.pending.Entries {
+			needed[contentKey{entry.ContentType, entry.Checksum}] = struct{}{}
+		}
+	}
+	for key := range s.payloads {
+		if _, ok := needed[key]; !ok {
+			delete(s.payloads, key)
+		}
+	}
+}
+
+func (s *peerState) clearPending() {
+	s.pending = nil
+	s.prune()
+}
+
 // Fetcher periodically fetches clipboard history from all discovered peers.
 type Fetcher struct {
 	log             *slog.Logger
@@ -42,6 +79,8 @@ type Fetcher struct {
 
 	mu    sync.RWMutex
 	cache map[string]PeerClipboard
+	// states is owned by the fetch loop; only published cache snapshots need mu.
+	states map[string]*peerState
 
 	OnUpdate func()
 }
@@ -67,7 +106,8 @@ func New(
 				TLSClientConfig: &tls.Config{RootCAs: caPool},
 			},
 		},
-		cache: make(map[string]PeerClipboard),
+		cache:  make(map[string]PeerClipboard),
+		states: make(map[string]*peerState),
 	}
 }
 
@@ -112,7 +152,11 @@ func (f *Fetcher) fetchAll() {
 	for _, p := range peers {
 		activePeers[p.Name] = struct{}{}
 	}
-	// remove any cached peers that are no longer active
+	for name := range f.states {
+		if _, ok := activePeers[name]; !ok {
+			delete(f.states, name)
+		}
+	}
 	f.mu.Lock()
 	for name := range f.cache {
 		if _, ok := activePeers[name]; !ok {
@@ -123,9 +167,17 @@ func (f *Fetcher) fetchAll() {
 	f.mu.Unlock()
 
 	for _, p := range peers {
-		entries, err := f.fetchPeer(p)
+		state, ok := f.states[p.Name]
+		if !ok {
+			state = &peerState{payloads: make(map[contentKey]string)}
+			f.states[p.Name] = state
+		}
+		entries, updated, err := f.fetchPeer(p, state)
 		if err != nil {
 			f.log.Debug("failed to fetch peer clipboard", "peer", p.Name, "error", err)
+			continue
+		}
+		if !updated {
 			continue
 		}
 		displayName := p.Name
@@ -133,84 +185,144 @@ func (f *Fetcher) fetchAll() {
 			displayName = strings.SplitN(p.Name, ".", 2)[0]
 		}
 		f.mu.Lock()
-		existing, exists := f.cache[p.Name]
-		if !exists || !sameEntryIDs(existing.Entries, entries) {
-			f.cache[p.Name] = PeerClipboard{PeerName: displayName, Entries: entries}
-			changed = true
-		}
+		f.cache[p.Name] = PeerClipboard{PeerName: displayName, Entries: entries}
 		f.mu.Unlock()
+		changed = true
 	}
 	if changed && f.OnUpdate != nil {
 		f.OnUpdate()
 	}
 }
 
-func sameEntryIDs(a, b []clipboard.ClipboardEntry) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i].ID != b[i].ID {
-			return false
-		}
-	}
-	return true
-}
-
-func (f *Fetcher) fetchPeer(p fmdns.Peer) ([]clipboard.ClipboardEntry, error) {
+func (f *Fetcher) fetchPeer(p fmdns.Peer, state *peerState) ([]clipboard.ClipboardEntry, bool, error) {
 	baseURL := fmt.Sprintf("https://%s:%d", p.Addr, p.Port)
-	req, err := http.NewRequest(http.MethodGet, baseURL+"/api/clipboard", nil)
-	if err != nil {
-		return nil, err
+	var version struct {
+		Checksum string `json:"checksum"`
 	}
-	req.Header.Set("X-Omaclip-Pass", f.passphraseStore.Hash())
-
-	resp, err := f.client.Do(req)
-	if err != nil {
-		return nil, err
+	if err := f.fetchJSON(baseURL+"/api/clipboard/checksum", &version); err != nil {
+		return nil, false, err
 	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	var entries []clipboard.ClipboardEntry
-	if err := json.NewDecoder(resp.Body).Decode(&entries); err != nil {
-		return nil, fmt.Errorf("decoding response: %w", err)
+	if version.Checksum == "" {
+		return nil, false, fmt.Errorf("missing clipboard checksum")
+	}
+	if version.Checksum == state.committed.Checksum {
+		if state.pending != nil {
+			state.clearPending()
+		}
+		return nil, false, nil
 	}
 
-	for i, e := range entries {
-		if e.ContentType != "image" {
+	if state.pending == nil || version.Checksum != state.pending.Checksum {
+		var manifest clipboard.Manifest
+		if err := f.fetchJSON(baseURL+"/api/clipboard", &manifest); err != nil {
+			state.clearPending()
+			return nil, false, err
+		}
+		if manifest.Entries == nil || manifest.Checksum != clipboard.ManifestChecksum(manifest.Entries) {
+			state.clearPending()
+			return nil, false, fmt.Errorf("invalid clipboard manifest checksum")
+		}
+		for _, entry := range manifest.Entries {
+			if !clipboard.IsSupportedContentType(entry.ContentType) {
+				state.clearPending()
+				return nil, false, fmt.Errorf("unsupported clipboard content type %q", entry.ContentType)
+			}
+		}
+		// The manifest can be newer than the checksum response.
+		if manifest.Checksum == state.committed.Checksum {
+			state.clearPending()
+			return nil, false, nil
+		}
+		state.pending = &manifest
+		state.prune()
+	}
+
+	var fetchErr error
+	for _, entry := range state.pending.Entries {
+		key := contentKey{entry.ContentType, entry.Checksum}
+		if _, ok := state.payloads[key]; ok {
 			continue
 		}
-		imgData, contentType, err := f.fetchPeerImage(baseURL, e.ID)
+		data, err := f.fetchContent(baseURL, entry)
 		if err != nil {
-			f.log.Debug("failed to fetch peer image", "peer", p.Name, "id", e.ID, "error", err)
+			if fetchErr == nil {
+				fetchErr = err
+			}
 			continue
 		}
-		entries[i].ImageData = base64.StdEncoding.EncodeToString(imgData)
-		entries[i].ImageMimeType = contentType
+		if clipboard.ParseContentType(entry.ContentType) == clipboard.ContentTypeImage {
+			state.payloads[key] = base64.StdEncoding.EncodeToString(data)
+		} else {
+			state.payloads[key] = string(data)
+		}
+	}
+	if fetchErr != nil {
+		return nil, false, fetchErr
 	}
 
-	return entries, nil
+	entries := make([]clipboard.ClipboardEntry, len(state.pending.Entries))
+	for i, entry := range state.pending.Entries {
+		entries[i] = clipboard.ClipboardEntry{
+			ID:            entry.ID,
+			Checksum:      entry.Checksum,
+			ContentType:   entry.ContentType,
+			ImageMimeType: entry.ImageMimeType,
+			Timestamp:     entry.Timestamp,
+		}
+		payload := state.payloads[contentKey{entry.ContentType, entry.Checksum}]
+		if clipboard.ParseContentType(entry.ContentType) == clipboard.ContentTypeImage {
+			entries[i].ImageData = payload
+		} else {
+			entries[i].Content = payload
+		}
+	}
+	state.committed = *state.pending
+	state.clearPending()
+	return entries, true, nil
 }
 
-func (f *Fetcher) fetchPeerImage(baseURL, id string) ([]byte, string, error) {
-	req, err := http.NewRequest(http.MethodGet, baseURL+"/api/clipboard/"+id+"/image", nil)
+func (f *Fetcher) get(endpoint string) (*http.Response, error) {
+	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	req.Header.Set("X-Omaclip-Pass", f.passphraseStore.Hash())
-
 	resp, err := f.client.Do(req)
 	if err != nil {
-		return nil, "", err
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close() //nolint:errcheck
+		return nil, fmt.Errorf("unexpected status %d from %s", resp.StatusCode, endpoint)
+	}
+	return resp, nil
+}
+
+func (f *Fetcher) fetchJSON(endpoint string, result any) error {
+	resp, err := f.get(endpoint)
+	if err != nil {
+		return err
 	}
 	defer resp.Body.Close() //nolint:errcheck
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, "", fmt.Errorf("unexpected status %d", resp.StatusCode)
+	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+		return fmt.Errorf("decoding response: %w", err)
 	}
+	return nil
+}
+
+func (f *Fetcher) fetchContent(baseURL string, entry clipboard.ManifestEntry) ([]byte, error) {
+	resp, err := f.get(baseURL + "/api/clipboard/" + url.PathEscape(entry.ID) + "/content")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() //nolint:errcheck
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
-	return data, resp.Header.Get("Content-Type"), nil
+	checksum := sha256.Sum256(data)
+	if hex.EncodeToString(checksum[:]) != entry.Checksum {
+		return nil, fmt.Errorf("content checksum mismatch for %s", entry.ID)
+	}
+	return data, nil
 }
