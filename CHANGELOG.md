@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-08
+
 ### Changed
 
 - Replaced repeated clipboard payload downloads with protocol v2: precomputed history checksums, payload-free manifests, and SHA-256-verified downloads of only missing text/image content.
