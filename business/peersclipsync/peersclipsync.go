@@ -64,6 +64,11 @@ func (s *peerState) prune() {
 	}
 }
 
+func (s *peerState) clearPending() {
+	s.pending = nil
+	s.prune()
+}
+
 // Fetcher periodically fetches clipboard history from all discovered peers.
 type Fetcher struct {
 	log             *slog.Logger
@@ -202,8 +207,7 @@ func (f *Fetcher) fetchPeer(p fmdns.Peer, state *peerState) ([]clipboard.Clipboa
 	}
 	if version.Checksum == state.committed.Checksum {
 		if state.pending != nil {
-			state.pending = nil
-			state.prune()
+			state.clearPending()
 		}
 		return nil, false, nil
 	}
@@ -211,26 +215,22 @@ func (f *Fetcher) fetchPeer(p fmdns.Peer, state *peerState) ([]clipboard.Clipboa
 	if state.pending == nil || version.Checksum != state.pending.Checksum {
 		var manifest clipboard.Manifest
 		if err := f.fetchJSON(baseURL+"/api/clipboard", &manifest); err != nil {
-			state.pending = nil
-			state.prune()
+			state.clearPending()
 			return nil, false, err
 		}
 		if manifest.Entries == nil || manifest.Checksum != clipboard.ManifestChecksum(manifest.Entries) {
-			state.pending = nil
-			state.prune()
+			state.clearPending()
 			return nil, false, fmt.Errorf("invalid clipboard manifest checksum")
 		}
 		for _, entry := range manifest.Entries {
 			if !clipboard.IsSupportedContentType(entry.ContentType) {
-				state.pending = nil
-				state.prune()
+				state.clearPending()
 				return nil, false, fmt.Errorf("unsupported clipboard content type %q", entry.ContentType)
 			}
 		}
 		// The manifest can be newer than the checksum response.
 		if manifest.Checksum == state.committed.Checksum {
-			state.pending = nil
-			state.prune()
+			state.clearPending()
 			return nil, false, nil
 		}
 		state.pending = &manifest
@@ -277,8 +277,7 @@ func (f *Fetcher) fetchPeer(p fmdns.Peer, state *peerState) ([]clipboard.Clipboa
 		}
 	}
 	state.committed = *state.pending
-	state.pending = nil
-	state.prune()
+	state.clearPending()
 	return entries, true, nil
 }
 
