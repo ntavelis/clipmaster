@@ -44,3 +44,41 @@ func ManifestChecksum(entries []ManifestEntry) string {
 	}
 	return sha256Hex(data)
 }
+
+// ContentType identifies a supported clipboard payload type.
+type ContentType uint8
+
+const (
+	ContentTypeUnknown ContentType = iota
+	ContentTypeText
+	ContentTypeImage
+)
+
+// ParseContentType maps the wire-format content type to its enum value.
+func ParseContentType(contentType string) ContentType {
+	switch contentType {
+	case ContentTypeText.String():
+		return ContentTypeText
+	case ContentTypeImage.String():
+		return ContentTypeImage
+	default:
+		return ContentTypeUnknown
+	}
+}
+
+// String returns the wire-format value for a content type.
+func (contentType ContentType) String() string {
+	switch contentType {
+	case ContentTypeText:
+		return "text"
+	case ContentTypeImage:
+		return "image"
+	default:
+		return ""
+	}
+}
+
+// IsSupportedContentType reports whether the wire-format content type is supported.
+func IsSupportedContentType(contentType string) bool {
+	return ParseContentType(contentType) != ContentTypeUnknown
+}

@@ -134,7 +134,7 @@ func (m *Monitor) rebuildManifest() {
 	entries := make([]ManifestEntry, 0, min(len(m.history), m.remoteMaxHistory))
 	for i := len(m.history) - 1; i >= 0 && len(entries) < m.remoteMaxHistory; i-- {
 		entry := m.history[i]
-		if entry.ContentType != "text" && entry.ContentType != "image" {
+		if !IsSupportedContentType(entry.ContentType) {
 			continue
 		}
 		entries = append(entries, ManifestEntry{
@@ -232,7 +232,7 @@ func (m *Monitor) CopyItem(id string) error {
 
 	for _, entry := range m.history {
 		if entry.ID == id {
-			if entry.ContentType == "image" {
+			if ParseContentType(entry.ContentType) == ContentTypeImage {
 				imgBytes, err := base64.StdEncoding.DecodeString(entry.ImageData)
 				if err != nil {
 					return fmt.Errorf("decoding image data: %w", err)
@@ -344,7 +344,7 @@ func (m *Monitor) readClipboard(parent context.Context) {
 			ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
 			Checksum:    sha256Hex([]byte(text)),
 			Content:     text,
-			ContentType: "text",
+			ContentType: ContentTypeText.String(),
 			Timestamp:   time.Now(),
 		})
 	}
@@ -380,7 +380,7 @@ func (m *Monitor) readClipboard(parent context.Context) {
 			m.addEntry(ClipboardEntry{
 				ID:            fmt.Sprintf("%d", time.Now().UnixNano()),
 				Checksum:      imgHash,
-				ContentType:   "image",
+				ContentType:   ContentTypeImage.String(),
 				ImageData:     base64.StdEncoding.EncodeToString(imgData),
 				ImageMimeType: mimeType,
 				Timestamp:     time.Now(),

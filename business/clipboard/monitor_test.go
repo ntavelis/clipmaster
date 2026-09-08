@@ -64,7 +64,7 @@ func TestReadClipboard_NewText(t *testing.T) {
 	if len(h) != 1 {
 		t.Fatalf("got %d entries, want 1", len(h))
 	}
-	if h[0].ContentType != "text" || h[0].Content != "hello" {
+	if ParseContentType(h[0].ContentType) != ContentTypeText || h[0].Content != "hello" {
 		t.Errorf("got entry %+v, want text=hello", h[0])
 	}
 	hash := sha256.Sum256([]byte("hello"))
@@ -106,7 +106,7 @@ func TestReadClipboard_TextErrorIgnored(t *testing.T) {
 	if len(h) != 1 {
 		t.Fatalf("got %d entries, want 1", len(h))
 	}
-	if h[0].ContentType != "image" {
+	if ParseContentType(h[0].ContentType) != ContentTypeImage {
 		t.Errorf("got contentType=%s, want image", h[0].ContentType)
 	}
 }
@@ -122,7 +122,7 @@ func TestReadClipboard_NewImage(t *testing.T) {
 	if len(h) != 1 {
 		t.Fatalf("got %d entries, want 1", len(h))
 	}
-	if h[0].ContentType != "image" {
+	if ParseContentType(h[0].ContentType) != ContentTypeImage {
 		t.Errorf("got contentType=%s, want image", h[0].ContentType)
 	}
 	if h[0].ImageMimeType != "image/png" {
@@ -227,10 +227,10 @@ func TestReadClipboard_TextAndImage(t *testing.T) {
 		t.Fatalf("got %d entries, want 2", len(h))
 	}
 	// History is reverse-chronological: image first, then text.
-	if h[0].ContentType != "image" {
+	if ParseContentType(h[0].ContentType) != ContentTypeImage {
 		t.Errorf("entry[0] got contentType=%s, want image", h[0].ContentType)
 	}
-	if h[1].ContentType != "text" {
+	if ParseContentType(h[1].ContentType) != ContentTypeText {
 		t.Errorf("entry[1] got contentType=%s, want text", h[1].ContentType)
 	}
 }
@@ -250,7 +250,7 @@ func TestReadClipboard_TextAfterImage(t *testing.T) {
 	if len(h) != 2 {
 		t.Fatalf("got %d entries, want 2", len(h))
 	}
-	if h[0].ContentType != "text" || h[0].Content != "new text" {
+	if ParseContentType(h[0].ContentType) != ContentTypeText || h[0].Content != "new text" {
 		t.Errorf("entry[0] got %+v, want text=new text", h[0])
 	}
 }

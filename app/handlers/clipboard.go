@@ -55,11 +55,11 @@ func (h *ClipboardHandler) GetClipboard(w http.ResponseWriter, r *http.Request) 
 func (h *ClipboardHandler) GetClipboardContent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	entry, ok := h.Monitor.GetEntry(id)
-	if !ok || (entry.ContentType != "text" && entry.ContentType != "image") {
+	if !ok || !clipboard.IsSupportedContentType(entry.ContentType) {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
-	if entry.ContentType == "text" {
+	if clipboard.ParseContentType(entry.ContentType) == clipboard.ContentTypeText {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		io.WriteString(w, entry.Content) //nolint:errcheck
 		return

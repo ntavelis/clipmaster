@@ -139,7 +139,7 @@ func manifestEntry(id, contentType string, body []byte) clipboard.ManifestEntry 
 		ID: id, Checksum: hex.EncodeToString(sum[:]), ContentType: contentType,
 		Timestamp: time.Date(2026, time.September, 7, 12, 0, 0, 0, time.UTC),
 	}
-	if contentType == "image" {
+	if clipboard.ParseContentType(contentType) == clipboard.ContentTypeImage {
 		entry.ImageMimeType = "image/png"
 	}
 	return entry

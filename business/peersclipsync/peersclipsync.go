@@ -221,7 +221,7 @@ func (f *Fetcher) fetchPeer(p fmdns.Peer, state *peerState) ([]clipboard.Clipboa
 			return nil, false, fmt.Errorf("invalid clipboard manifest checksum")
 		}
 		for _, entry := range manifest.Entries {
-			if entry.ContentType != "text" && entry.ContentType != "image" {
+			if !clipboard.IsSupportedContentType(entry.ContentType) {
 				state.pending = nil
 				state.prune()
 				return nil, false, fmt.Errorf("unsupported clipboard content type %q", entry.ContentType)
@@ -250,7 +250,7 @@ func (f *Fetcher) fetchPeer(p fmdns.Peer, state *peerState) ([]clipboard.Clipboa
 			}
 			continue
 		}
-		if entry.ContentType == "image" {
+		if clipboard.ParseContentType(entry.ContentType) == clipboard.ContentTypeImage {
 			state.payloads[key] = base64.StdEncoding.EncodeToString(data)
 		} else {
 			state.payloads[key] = string(data)
@@ -270,7 +270,7 @@ func (f *Fetcher) fetchPeer(p fmdns.Peer, state *peerState) ([]clipboard.Clipboa
 			Timestamp:     entry.Timestamp,
 		}
 		payload := state.payloads[contentKey{entry.ContentType, entry.Checksum}]
-		if entry.ContentType == "image" {
+		if clipboard.ParseContentType(entry.ContentType) == clipboard.ContentTypeImage {
 			entries[i].ImageData = payload
 		} else {
 			entries[i].Content = payload
